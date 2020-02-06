@@ -8,6 +8,12 @@ This project will be based on:
 - [The OpenEVR project](https://github.com/jpietari/mrf-openevr)
 - The carrier board for the picoZED from TTU (aka [FPGA-based IOC](https://confluence.esss.lu.se/display/HAR/picoZED+carrier+board))
 
+## Startup steps
+
+In order to start playing with the project, the complete Vivado project structure must be generated.
+To do so, just type: ```make project``` and the project will be generated at *fpga/output/vivado_project*.
+Then compile as usual using the Vivado GUI.
+
 ## Related projects
 
 - [ESS YoctoLinux](https://gitlab.esss.lu.se/icshwi/yocto-ess/)
@@ -18,5 +24,5 @@ This project will be based on:
 
 If you want to collaborate or ask any question, please contact any of the 
 project maintainers:
-- Ross Elliot<ross.elliot@ess.eu>
-- Felipe Torres González<felipe.torresgonzalez@ess.eu>
+- Ross Elliot <ross.elliot@ess.eu>
+- Felipe Torres González <felipe.torresgonzalez@ess.eu>

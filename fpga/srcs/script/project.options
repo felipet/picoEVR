@@ -1,0 +1,8 @@
+directory.src: .
+directory.output: fpga/output
+directory.build: fpga/output/build
+directory.log: fpga/output/log
+
+project.name: picoEVR
+project.dir: vivado_project
+project.tcl: fpga/srcs/tcl/picoevr_golden.tcl
