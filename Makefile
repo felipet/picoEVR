@@ -28,26 +28,43 @@ PROJECT_TCL        := $(shell grep -e 'project.tcl'      $(CONFIG_NAME) | sed 's
 HDL_FILES_FILENAME := $(shell grep -e 'files.hdl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 
+
 # -------
 # Targets
 # -------
-.PHONY: all clean project
+.PHONY: all clean project synthesis implementation bitstream
 
-all: project
+all: project synthesis implementation bitstream
 
-project:        $(PROJECT_NAME).xpr
+project:        $(OUTPUT_DIR)/$(PROJECT_NAME).xpr
+synthesis:      $(BUILD_DIR)/$(PROJECT_TOP).dcp 
+implementation: $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp 
+bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
+
 
 # Vivado workflow steps
 # ---------------------
 
 #project file generation.
-$(PROJECT_NAME).xpr:
-	@echo -e "\033[1;92mBuilding: $@\033[0m"
+$(OUTPUT_DIR)/$(PROJECT_NAME).xpr:
+	@echo -e "\033[1;92mCreating project: $@\033[0m"
 	@mkdir -p $(LOG_DIR)
 	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" 2>&1 | tee $(LOG_DIR)/project.log
-ifeq ($(SO), LINUX)
-	@! grep -e '^ERROR' $(LOG_DIR)/project.log
-endif
+
+$(BUILD_DIR)/$(PROJECT_TOP).dcp:
+	@echo -e "\033[1;92mRunning synthesis: $@\033[0m"
+	@mkdir -p $(BUILD_DIR)
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs synth | tee $(LOG_DIR)/project.log 
+
+$(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp: 
+	@echo -e "\033[1;92mRunning implementation: $@\033[0m"
+	@mkdir -p $(BUILD_DIR)
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs impl | tee $(LOG_DIR)/project.log
+
+$(BUILD_DIR)/$(PROJECT_TOP).bit:
+	@echo -e "\033[1;92mGenerating bitstream: $@\033[0m"
+	@mkdir -p $(BUILD_DIR)
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs  bitstream | tee $(LOG_DIR)/project.log
 
 # Cleaning
 # --------
