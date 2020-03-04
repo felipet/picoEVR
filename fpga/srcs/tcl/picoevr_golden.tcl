@@ -323,6 +323,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set o_SY87730_PROGCS [ create_bd_port -dir O -from 0 -to 0 -type data o_SY87730_PROGCS ]
   set o_SY87730_PROGDI [ create_bd_port -dir O -type data o_SY87730_PROGDI ]
   set o_SY87730_PROGSK [ create_bd_port -dir O -type clk o_SY87730_PROGSK ]
+  set o_SI5346_RST_rn [ create_bd_port -dir O -from 0 -to 0 o_SI5346_RST_rn ]
 
   # Create instance: GPIO_Bus
   create_hier_cell_GPIO_Bus [current_bd_instance .] GPIO_Bus
@@ -337,6 +338,8 @@ proc cr_bd_picoevr_system_arch { parentCell } {
 
   # Create instance: SPI0_SS_VCC, and set properties
   set SPI0_SS_VCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SPI0_SS_VCC ]
+  # Create instance: Si5346_RST_N, and set properties
+  set Si5346_RST_N [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 Si5346_RST_N ]
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: leddriver, and set properties
@@ -838,6 +841,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
 
   # Create port connections
   connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
+  connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
   connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]
   connect_bd_net -net i_SY87730_LOCKED_1 [get_bd_ports i_SY87730_LOCKED] [get_bd_pins GPIO_Bus/i_SY87730_LOCKED]
   connect_bd_net -net leddriver_dout [get_bd_ports o_EVR_EVNT_LED] [get_bd_ports o_EVR_LINK_LED] [get_bd_pins leddriver/dout]

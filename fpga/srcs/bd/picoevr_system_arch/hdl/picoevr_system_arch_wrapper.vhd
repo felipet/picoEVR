@@ -38,6 +38,7 @@ entity picoevr_system_arch_wrapper is
     o_EVR_ENABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGDI : out STD_LOGIC;
     o_SY87730_PROGSK : out STD_LOGIC
@@ -54,6 +55,7 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     o_SY87730_PROGSK : out STD_LOGIC;
     o_SY87730_PROGDI : out STD_LOGIC;
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
     DDR_cas_n : inout STD_LOGIC;
     DDR_cke : inout STD_LOGIC;
     DDR_ck_n : inout STD_LOGIC;
@@ -105,6 +107,7 @@ picoevr_system_arch_i: component picoevr_system_arch
       o_EVR_ENABLE(0) => o_EVR_ENABLE(0),
       o_EVR_EVNT_LED(0) => o_EVR_EVNT_LED(0),
       o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
+      o_SI5346_RST_rn(0) => o_SI5346_RST_rn(0),
       o_SY87730_PROGCS(0) => o_SY87730_PROGCS(0),
       o_SY87730_PROGDI => o_SY87730_PROGDI,
       o_SY87730_PROGSK => o_SY87730_PROGSK
