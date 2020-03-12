@@ -1,8 +1,8 @@
 --Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
---Tool Version: Vivado v.2019.2.1 (lin64) Build 2729669 Thu Dec  5 04:48:12 MST 2019
---Date        : Wed Feb  5 16:03:32 2020
---Host        : dellftg running 64-bit Fedora release 31 (Thirty One)
+--Tool Version: Vivado v.2019.2 (lin64) Build 2708876 Wed Nov  6 21:39:14 MST 2019
+--Date        : Tue Feb 25 09:40:42 2020
+--Host        : ci0011853 running 64-bit Debian GNU/Linux 10 (buster)
 --Command     : generate_target picoevr_system_arch_wrapper.bd
 --Design      : picoevr_system_arch_wrapper
 --Purpose     : IP block netlist
@@ -34,8 +34,11 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
+    i_SY87730_LOCKED : in STD_LOGIC;
+    o_EVR_ENABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGDI : out STD_LOGIC;
     o_SY87730_PROGSK : out STD_LOGIC
@@ -45,6 +48,14 @@ end picoevr_system_arch_wrapper;
 architecture STRUCTURE of picoevr_system_arch_wrapper is
   component picoevr_system_arch is
   port (
+    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_ENABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
+    i_SY87730_LOCKED : in STD_LOGIC;
+    o_SY87730_PROGSK : out STD_LOGIC;
+    o_SY87730_PROGDI : out STD_LOGIC;
+    o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
     DDR_cas_n : inout STD_LOGIC;
     DDR_cke : inout STD_LOGIC;
     DDR_ck_n : inout STD_LOGIC;
@@ -65,12 +76,7 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
     FIXED_IO_ps_clk : inout STD_LOGIC;
-    FIXED_IO_ps_porb : inout STD_LOGIC;
-    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
-    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
-    o_SY87730_PROGDI : out STD_LOGIC;
-    o_SY87730_PROGSK : out STD_LOGIC;
-    o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 )
+    FIXED_IO_ps_porb : inout STD_LOGIC
   );
   end component picoevr_system_arch;
 begin
@@ -97,8 +103,11 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
+      i_SY87730_LOCKED => i_SY87730_LOCKED,
+      o_EVR_ENABLE(0) => o_EVR_ENABLE(0),
       o_EVR_EVNT_LED(0) => o_EVR_EVNT_LED(0),
       o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
+      o_SI5346_RST_rn(0) => o_SI5346_RST_rn(0),
       o_SY87730_PROGCS(0) => o_SY87730_PROGCS(0),
       o_SY87730_PROGDI => o_SY87730_PROGDI,
       o_SY87730_PROGSK => o_SY87730_PROGSK

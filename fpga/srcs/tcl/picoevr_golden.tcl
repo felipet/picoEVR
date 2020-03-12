@@ -107,13 +107,11 @@ create_project ${_xil_proj_name_} "./fpga/output/vivado_project" -part xc7z030sb
 
 # Set project properties
 set obj [current_project]
-set_property -name "board_part" -value "em.avnet.com:picozed_7030_som:part0:1.2" -objects $obj
 set_property -name "default_lib" -value "xil_defaultlib" -objects $obj
 set_property -name "enable_vhdl_2008" -value "1" -objects $obj
 set_property -name "ip_cache_permissions" -value "read write" -objects $obj
 set_property -name "ip_output_repo" -value "$proj_dir/${_xil_proj_name_}.cache/ip" -objects $obj
 set_property -name "mem.enable_memory_map_generation" -value "1" -objects $obj
-set_property -name "platform.board_id" -value "picozed_7030_som" -objects $obj
 set_property -name "sim.central_dir" -value "$proj_dir/${_xil_proj_name_}.ip_user_files" -objects $obj
 set_property -name "sim.ip.auto_export_scripts" -value "1" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
@@ -187,7 +185,59 @@ set obj [get_filesets utils_1]
 
 
 # Adding sources referenced in BDs, if not already added
+# Hierarchical cell: GPIO_Bus
+proc create_hier_cell_GPIO_Bus { parentCell nameHier } {
 
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_msg_id "BD_TCL-102" "ERROR" "create_hier_cell_GPIO_Bus() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_msg_id "BD_TCL-100" "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_msg_id "BD_TCL-101" "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+
+  # Create pins
+  create_bd_pin -dir O -from 31 -to 0 dout
+  create_bd_pin -dir I -from 0 -to 0 i_SY87730_LOCKED
+
+  # Create instance: xlconcat_0, and set properties
+  set xlconcat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0 ]
+  set_property -dict [ list \
+   CONFIG.NUM_PORTS {32} \
+ ] $xlconcat_0
+
+  # Create port connections
+  connect_bd_net -net i_SY87730_LOCKED_1 [get_bd_pins i_SY87730_LOCKED] [get_bd_pins xlconcat_0/In0]
+  connect_bd_net -net xlconcat_0_dout [get_bd_pins dout] [get_bd_pins xlconcat_0/dout]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
 
 # Proc to create BD picoevr_system_arch
 proc cr_bd_picoevr_system_arch { parentCell } {
@@ -266,12 +316,32 @@ proc cr_bd_picoevr_system_arch { parentCell } {
 
 
   # Create ports
+  set i_SY87730_LOCKED [ create_bd_port -dir I -type data i_SY87730_LOCKED ]
+  set o_EVR_ENABLE [ create_bd_port -dir O -from 0 -to 0 o_EVR_ENABLE ]
   set o_EVR_EVNT_LED [ create_bd_port -dir O -from 0 -to 0 o_EVR_EVNT_LED ]
   set o_EVR_LINK_LED [ create_bd_port -dir O -from 0 -to 0 -type data o_EVR_LINK_LED ]
   set o_SY87730_PROGCS [ create_bd_port -dir O -from 0 -to 0 -type data o_SY87730_PROGCS ]
   set o_SY87730_PROGDI [ create_bd_port -dir O -type data o_SY87730_PROGDI ]
   set o_SY87730_PROGSK [ create_bd_port -dir O -type clk o_SY87730_PROGSK ]
+  set o_SI5346_RST_rn [ create_bd_port -dir O -from 0 -to 0 o_SI5346_RST_rn ]
 
+  # Create instance: GPIO_Bus
+  create_hier_cell_GPIO_Bus [current_bd_instance .] GPIO_Bus
+
+  # Create instance: SPI0_SS_O_Not, and set properties
+  set SPI0_SS_O_Not [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 SPI0_SS_O_Not ]
+  set_property -dict [ list \
+   CONFIG.C_OPERATION {not} \
+   CONFIG.C_SIZE {1} \
+   CONFIG.LOGO_FILE {data/sym_notgate.png} \
+ ] $SPI0_SS_O_Not
+
+  # Create instance: SPI0_SS_VCC, and set properties
+  set SPI0_SS_VCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SPI0_SS_VCC ]
+  # Create instance: Si5346_RST_N, and set properties
+  set Si5346_RST_N [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 Si5346_RST_N ]
+  # Create instance: evr_clk_en, and set properties
+  set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: leddriver, and set properties
   set leddriver [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 leddriver ]
 
@@ -392,10 +462,13 @@ proc cr_bd_picoevr_system_arch { parentCell } {
    CONFIG.PCW_FPGA_FCLK1_ENABLE {0} \
    CONFIG.PCW_FPGA_FCLK2_ENABLE {0} \
    CONFIG.PCW_FPGA_FCLK3_ENABLE {0} \
-   CONFIG.PCW_GPIO_EMIO_GPIO_ENABLE {0} \
-   CONFIG.PCW_GPIO_MIO_GPIO_ENABLE {1} \
-   CONFIG.PCW_GPIO_MIO_GPIO_IO {MIO} \
-   CONFIG.PCW_GPIO_PERIPHERAL_ENABLE {1} \
+   CONFIG.PCW_GPIO_BASEADDR {0xE000A000} \
+   CONFIG.PCW_GPIO_EMIO_GPIO_ENABLE {1} \
+   CONFIG.PCW_GPIO_EMIO_GPIO_IO {32} \
+   CONFIG.PCW_GPIO_EMIO_GPIO_WIDTH {32} \
+   CONFIG.PCW_GPIO_HIGHADDR {0xE000AFFF} \
+   CONFIG.PCW_GPIO_MIO_GPIO_ENABLE {0} \
+   CONFIG.PCW_GPIO_MIO_GPIO_IO {<Select>} \
    CONFIG.PCW_I2C0_GRP_INT_ENABLE {0} \
    CONFIG.PCW_I2C0_I2C0_IO {MIO 50 .. 51} \
    CONFIG.PCW_I2C0_PERIPHERAL_ENABLE {1} \
@@ -767,42 +840,19 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
 
   # Create port connections
+  connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
+  connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
+  connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]
+  connect_bd_net -net i_SY87730_LOCKED_1 [get_bd_ports i_SY87730_LOCKED] [get_bd_pins GPIO_Bus/i_SY87730_LOCKED]
   connect_bd_net -net leddriver_dout [get_bd_ports o_EVR_EVNT_LED] [get_bd_ports o_EVR_LINK_LED] [get_bd_pins leddriver/dout]
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
   connect_bd_net -net processing_system7_0_SPI0_MOSI_O [get_bd_ports o_SY87730_PROGDI] [get_bd_pins processing_system7_0/SPI0_MOSI_O]
   connect_bd_net -net processing_system7_0_SPI0_SCLK_O [get_bd_ports o_SY87730_PROGSK] [get_bd_pins processing_system7_0/SPI0_SCLK_O]
-  connect_bd_net -net processing_system7_0_SPI0_SS_O [get_bd_ports o_SY87730_PROGCS] [get_bd_pins processing_system7_0/SPI0_SS_O]
+  connect_bd_net -net processing_system7_0_SPI0_SS_O [get_bd_pins SPI0_SS_O_Not/Op1] [get_bd_pins processing_system7_0/SPI0_SS_O]
+  connect_bd_net -net spiSSTieOff_dout [get_bd_pins SPI0_SS_VCC/dout] [get_bd_pins processing_system7_0/SPI0_SS_I]
+  connect_bd_net -net util_vector_logic_0_Res [get_bd_ports o_SY87730_PROGCS] [get_bd_pins SPI0_SS_O_Not/Res]
 
   # Create address segments
-
-  # Perform GUI Layout
-  regenerate_bd_layout -layout_string {
-   "ActiveEmotionalView":"Default View",
-   "Default View_ScaleFactor":"1.0",
-   "Default View_TopLeft":"-200,-67",
-   "ExpandedHierarchyInLayout":"",
-   "guistr":"# # String gsaved with Nlview 7.0.21  2019-05-29 bk=1.5064 VDI=41 GEI=36 GUI=JA:9.0 TLS
-#  -string -flagsOSRD
-preplace port DDR -pg 1 -lvl 2 -x 470 -y 170 -defaultsOSRD
-preplace port FIXED_IO -pg 1 -lvl 2 -x 470 -y 190 -defaultsOSRD
-preplace port o_SY87730_PROGDI -pg 1 -lvl 2 -x 470 -y 250 -defaultsOSRD
-preplace port o_SY87730_PROGSK -pg 1 -lvl 2 -x 470 -y 230 -defaultsOSRD
-preplace portBus o_EVR_EVNT_LED -pg 1 -lvl 2 -x 470 -y 50 -defaultsOSRD
-preplace portBus o_EVR_LINK_LED -pg 1 -lvl 2 -x 470 -y 70 -defaultsOSRD
-preplace portBus o_SY87730_PROGCS -pg 1 -lvl 2 -x 470 -y 270 -defaultsOSRD
-preplace inst processing_system7_0 -pg 1 -lvl 1 -x 230 -y 280 -defaultsOSRD
-preplace inst leddriver -pg 1 -lvl 1 -x 230 -y 70 -defaultsOSRD
-preplace netloc processing_system7_0_FCLK_CLK0 1 0 2 20 10 440
-preplace netloc leddriver_dout 1 1 1 450J 50n
-preplace netloc processing_system7_0_SPI0_SCLK_O 1 1 1 NJ 230
-preplace netloc processing_system7_0_SPI0_MOSI_O 1 1 1 NJ 250
-preplace netloc processing_system7_0_SPI0_SS_O 1 1 1 N 270
-preplace netloc processing_system7_0_DDR 1 1 1 NJ 170
-preplace netloc processing_system7_0_FIXED_IO 1 1 1 NJ 190
-levelinfo -pg 1 0 230 470
-pagesize -pg 1 -db -bbox -sgen 0 0 700 450
-"
-}
 
   # Restore current instance
   current_bd_instance $oldCurInst

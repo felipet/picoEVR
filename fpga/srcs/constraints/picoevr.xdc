@@ -15,12 +15,12 @@
 # =============================================================================
 # Clocks
 # =============================================================================
-
+# From Si5346 Out0 - ? MHz
+set_property PACKAGE_PIN V9   [get_ports {i_ZYNQ_CLKREF0_N   }];   # "V9.MGTREFCLKC0_N"
 # From Si5346 Out1 - ? MHz
 set_property PACKAGE_PIN V5   [get_ports {i_ZYNQ_CLKREF1_N   }];  # "V5.MGTREFCLKC1_N"
 # From Si5346 Out2 - ? MHz
-set_property PACKAGE_PIN Y19  [get_ports {ZYNQ_MRCC_LVDS_N   }];  # "Y18.BANK13_LVDS_7_N"
-set_property PACKAGE_PIN V9   [get_ports {i_ZYNQ_CLKREF0_N   }];  # "V9.MGTREFCLKC0_N"
+set_property PACKAGE_PIN Y19  [get_ports {i_ZYNQ_MRCC_LVDS_N }];  # "Y18.BANK13_LVDS_7_N"
 set_property PACKAGE_PIN AB5  [get_ports {i_DP0_M2C_N        }];  # "AB5.MGTTX2_N"
 
 
@@ -29,15 +29,15 @@ set_property PACKAGE_PIN AB5  [get_ports {i_DP0_M2C_N        }];  # "AB5.MGTTX2_
 # =============================================================================
 
 # Si5346 Loss of signal alarm on the XA/XB pins 
-set_property PACKAGE_PIN H3   [get_ports {i_SI5346_LOS_XAXB }];  # "H3.JX1_LVDS_0_N"
+set_property PACKAGE_PIN H3   [get_ports {i_SI5346_LOL_XAXB }];  # "H3.JX1_LVDS_0_N"
 # Si5346 Output Enable 1
-set_property PACKAGE_PIN E5   [get_ports {i_SI5346_OE1      }];  # "E5.JX1_LVDS_1_N"
+set_property PACKAGE_PIN E5   [get_ports {o_SI5346_OE1      }];  # "E5.JX1_LVDS_1_N"
 # Si5346 Output Enable 0
-set_property PACKAGE_PIN F5   [get_ports {i_SI5346_OE0      }];  # "F5.JX1_LVDS_1_P"
+set_property PACKAGE_PIN F5   [get_ports {o_SI5346_OE0      }];  # "F5.JX1_LVDS_1_P"
 # Si5346 Loss of lock A - H: Locked | L: Out of lock
 set_property PACKAGE_PIN G3   [get_ports {i_SI5346_LOL_A    }];  # "G3.JX1_LVDS_2_P"
 # Si5346 Loss of lock B - H: Locked | L: Out of lock
-set_property PACKAGE_PIN G2   [get_ports {i_SI5346_LOK_B    }];  # "G2.JX1_LVDS_2_N"
+set_property PACKAGE_PIN G2   [get_ports {i_SI5346_LOL_B    }];  # "G2.JX1_LVDS_2_N"
 # Si5346 Device reset (active low)
 set_property PACKAGE_PIN G4   [get_ports {o_SI5346_RST_rn   }];  # "G4.JX1_LVDS_4_P"
 # Si5346 Interrupt pin (asserted low)

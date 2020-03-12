@@ -4,5 +4,6 @@ directory.build: fpga/output/build
 directory.log: fpga/output/log
 
 project.name: picoEVR
+project.part: xc7z030sbg485-1
 project.dir: vivado_project
 project.tcl: fpga/srcs/tcl/picoevr_golden.tcl
