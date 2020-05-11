@@ -1,0 +1,3 @@
+[submodule "fpga/srcs/libs/ess-openevr"]
+	path = fpga/srcs/libs/ess-openevr
+	url = git@github.com:icshwi/ess-openevr.git
