@@ -183,6 +183,9 @@ set obj [get_filesets utils_1]
 # Set 'utils_1' fileset properties
 set obj [get_filesets utils_1]
 
+# Add IP repository
+set_property ip_repo_paths "$origin_dir/../libs/ess-openevr" [current_project]
+
 
 # Adding sources referenced in BDs, if not already added
 # Hierarchical cell: GPIO_Bus
@@ -316,10 +319,18 @@ proc cr_bd_picoevr_system_arch { parentCell } {
 
 
   # Create ports
+  set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
+  set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
   set i_SY87730_LOCKED [ create_bd_port -dir I -type data i_SY87730_LOCKED ]
+  set i_ZYNQ_CLKREF0_N [ create_bd_port -dir I i_ZYNQ_CLKREF0_N ]
+  set i_ZYNQ_CLKREF0_P [ create_bd_port -dir I i_ZYNQ_CLKREF0_P ]
+  set i_ZYNQ_MRCC_LVDS_N [ create_bd_port -dir I i_ZYNQ_MRCC_LVDS_N ]
+  set i_ZYNQ_MRCC_LVDS_P [ create_bd_port -dir I i_ZYNQ_MRCC_LVDS_P ]
   set o_EVR_ENABLE [ create_bd_port -dir O -from 0 -to 0 o_EVR_ENABLE ]
   set o_EVR_EVNT_LED [ create_bd_port -dir O -from 0 -to 0 o_EVR_EVNT_LED ]
   set o_EVR_LINK_LED [ create_bd_port -dir O -from 0 -to 0 -type data o_EVR_LINK_LED ]
+  set o_EVR_TX_N [ create_bd_port -dir O o_EVR_TX_N ]
+  set o_EVR_TX_P [ create_bd_port -dir O o_EVR_TX_P ]
   set o_SY87730_PROGCS [ create_bd_port -dir O -from 0 -to 0 -type data o_SY87730_PROGCS ]
   set o_SY87730_PROGDI [ create_bd_port -dir O -type data o_SY87730_PROGDI ]
   set o_SY87730_PROGSK [ create_bd_port -dir O -type clk o_SY87730_PROGSK ]
@@ -342,8 +353,8 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set Si5346_RST_N [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 Si5346_RST_N ]
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
-  # Create instance: leddriver, and set properties
-  set leddriver [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 leddriver ]
+  # Create instance: ESS_OpenEVR, and set properties
+  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1 ESS_OpenEVR ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -840,17 +851,26 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
 
   # Create port connections
+  connect_bd_net -net ESS_OpenEVR_o_EVR_EVNT_LED [get_bd_ports o_EVR_EVNT_LED] [get_bd_pins ESS_OpenEVR/o_EVR_EVNT_LED]
+  connect_bd_net -net ESS_OpenEVR_o_EVR_LINK_LED [get_bd_ports o_EVR_LINK_LED] [get_bd_pins ESS_OpenEVR/o_EVR_LINK_LED]
+  connect_bd_net -net ESS_OpenEVR_o_EVR_TX_N [get_bd_ports o_EVR_TX_N] [get_bd_pins ESS_OpenEVR/o_EVR_TX_N]
+  connect_bd_net -net ESS_OpenEVR_o_EVR_TX_P [get_bd_ports o_EVR_TX_P] [get_bd_pins ESS_OpenEVR/o_EVR_TX_P]
   connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
   connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
   connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]
+  connect_bd_net -net i_EVR_RX_N_0_1 [get_bd_ports i_EVR_RX_N] [get_bd_pins ESS_OpenEVR/i_EVR_RX_N]
+  connect_bd_net -net i_EVR_RX_P_0_1 [get_bd_ports i_EVR_RX_P] [get_bd_pins ESS_OpenEVR/i_EVR_RX_P]
   connect_bd_net -net i_SY87730_LOCKED_1 [get_bd_ports i_SY87730_LOCKED] [get_bd_pins GPIO_Bus/i_SY87730_LOCKED]
-  connect_bd_net -net leddriver_dout [get_bd_ports o_EVR_EVNT_LED] [get_bd_ports o_EVR_LINK_LED] [get_bd_pins leddriver/dout]
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
   connect_bd_net -net processing_system7_0_SPI0_MOSI_O [get_bd_ports o_SY87730_PROGDI] [get_bd_pins processing_system7_0/SPI0_MOSI_O]
   connect_bd_net -net processing_system7_0_SPI0_SCLK_O [get_bd_ports o_SY87730_PROGSK] [get_bd_pins processing_system7_0/SPI0_SCLK_O]
   connect_bd_net -net processing_system7_0_SPI0_SS_O [get_bd_pins SPI0_SS_O_Not/Op1] [get_bd_pins processing_system7_0/SPI0_SS_O]
   connect_bd_net -net spiSSTieOff_dout [get_bd_pins SPI0_SS_VCC/dout] [get_bd_pins processing_system7_0/SPI0_SS_I]
   connect_bd_net -net util_vector_logic_0_Res [get_bd_ports o_SY87730_PROGCS] [get_bd_pins SPI0_SS_O_Not/Res]
+  connect_bd_net -net i_ZYNQ_CLKREF0_N_0_1 [get_bd_ports i_ZYNQ_CLKREF0_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_N]
+  connect_bd_net -net i_ZYNQ_CLKREF0_P_0_1 [get_bd_ports i_ZYNQ_CLKREF0_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_P]
+  connect_bd_net -net i_ZYNQ_MRCC_LVDS_N_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_N]
+  connect_bd_net -net i_ZYNQ_MRCC_LVDS_P_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_P]
 
   # Create address segments
 
