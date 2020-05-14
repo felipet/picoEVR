@@ -184,10 +184,109 @@ set obj [get_filesets utils_1]
 set obj [get_filesets utils_1]
 
 # Add IP repository
-set_property ip_repo_paths "$origin_dir/../libs/ess-openevr" [current_project]
-
+set_property ip_repo_paths "$origin_dir/../libs/" [current_project]
+update_ip_catalog
 
 # Adding sources referenced in BDs, if not already added
+
+# Hierarchical cell: debug_slice
+proc create_hier_cell_debug_slice { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_msg_id "BD_TCL-102" "ERROR" "create_hier_cell_debug_slice() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_msg_id "BD_TCL-100" "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_msg_id "BD_TCL-101" "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+
+  # Create pins
+  create_bd_pin -dir I -from 4 -to 0 Din
+  create_bd_pin -dir O -from 0 -to 0 Dout
+  create_bd_pin -dir O -from 0 -to 0 Dout1
+  create_bd_pin -dir O -from 0 -to 0 Dout2
+  create_bd_pin -dir O -from 0 -to 0 Dout3
+  create_bd_pin -dir O -from 0 -to 0 Dout4
+
+  # Create instance: xlslice_0, and set properties
+  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
+  set_property -dict [ list \
+   CONFIG.DIN_WIDTH {5} \
+ ] $xlslice_0
+
+  # Create instance: xlslice_1, and set properties
+  set xlslice_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_1 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {1} \
+   CONFIG.DIN_TO {1} \
+   CONFIG.DIN_WIDTH {5} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_1
+
+  # Create instance: xlslice_2, and set properties
+  set xlslice_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_2 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {2} \
+   CONFIG.DIN_TO {2} \
+   CONFIG.DIN_WIDTH {5} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_2
+
+  # Create instance: xlslice_3, and set properties
+  set xlslice_3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_3 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {3} \
+   CONFIG.DIN_TO {3} \
+   CONFIG.DIN_WIDTH {5} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_3
+
+  # Create instance: xlslice_4, and set properties
+  set xlslice_4 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_4 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {4} \
+   CONFIG.DIN_TO {4} \
+   CONFIG.DIN_WIDTH {5} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_4
+
+  # Create port connections
+  connect_bd_net -net Net1 [get_bd_pins Din] [get_bd_pins xlslice_0/Din] [get_bd_pins xlslice_1/Din] [get_bd_pins xlslice_2/Din] [get_bd_pins xlslice_3/Din] [get_bd_pins xlslice_4/Din]
+  connect_bd_net -net xlslice_0_Dout [get_bd_pins Dout] [get_bd_pins xlslice_0/Dout]
+  connect_bd_net -net xlslice_1_Dout [get_bd_pins Dout1] [get_bd_pins xlslice_1/Dout]
+  connect_bd_net -net xlslice_2_Dout [get_bd_pins Dout2] [get_bd_pins xlslice_2/Dout]
+  connect_bd_net -net xlslice_3_Dout [get_bd_pins Dout3] [get_bd_pins xlslice_3/Dout]
+  connect_bd_net -net xlslice_4_Dout [get_bd_pins Dout4] [get_bd_pins xlslice_4/Dout]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
 # Hierarchical cell: GPIO_Bus
 proc create_hier_cell_GPIO_Bus { parentCell nameHier } {
 
@@ -319,6 +418,17 @@ proc cr_bd_picoevr_system_arch { parentCell } {
 
 
   # Create ports
+  set dio_clk_n_in_0 [ create_bd_port -dir I dio_clk_n_in_0 ]
+  set dio_clk_p_in_0 [ create_bd_port -dir I dio_clk_p_in_0 ]
+  set dio_led_bot_out_0 [ create_bd_port -dir O dio_led_bot_out_0 ]
+  set dio_led_top_out_0 [ create_bd_port -dir O dio_led_top_out_0 ]
+  set dio_n_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_n_in_0 ]
+  set dio_n_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_n_out_0 ]
+  set dio_oe_n_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_oe_n_out_0 ]
+  set dio_onewire_b_0 [ create_bd_port -dir IO dio_onewire_b_0 ]
+  set dio_p_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_p_in_0 ]
+  set dio_p_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_p_out_0 ]
+  set dio_term_en_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_term_en_out_0 ]
   set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
   set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
   set i_SY87730_LOCKED [ create_bd_port -dir I -type data i_SY87730_LOCKED ]
@@ -339,6 +449,13 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   # Create instance: GPIO_Bus
   create_hier_cell_GPIO_Bus [current_bd_instance .] GPIO_Bus
 
+  # Create instance: DIO_Output_config, and set properties
+  set DIO_Output_config [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 DIO_Output_config ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+   CONFIG.CONST_WIDTH {5} \
+ ] $DIO_Output_config
+
   # Create instance: SPI0_SS_O_Not, and set properties
   set SPI0_SS_O_Not [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 SPI0_SS_O_Not ]
   set_property -dict [ list \
@@ -351,10 +468,25 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set SPI0_SS_VCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SPI0_SS_VCC ]
   # Create instance: Si5346_RST_N, and set properties
   set Si5346_RST_N [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 Si5346_RST_N ]
+
+  # Create instance: debug_slice
+  create_hier_cell_debug_slice [current_bd_instance .] debug_slice
+
+  # Create instance: digitalIO_0, and set properties
+  set digitalIO_0 [ create_bd_cell -type ip -vlnv ess.eu:icshwi:digitalIO:1.0 digitalIO_0 ]
+
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: ESS_OpenEVR, and set properties
-  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1 ESS_OpenEVR ]
+  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1.1 ESS_OpenEVR ]
+
+  # Create instance: ila_0, and set properties
+  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
+  set_property -dict [ list \
+   CONFIG.C_ENABLE_ILA_AXI_MON {false} \
+   CONFIG.C_MONITOR_TYPE {Native} \
+   CONFIG.C_NUM_OF_PROBES {3} \
+ ] $ila_0
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -851,26 +983,46 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
 
   # Create port connections
+  connect_bd_net -net ESS_OpenEVR_o_EVR_EVENT_CLK [get_bd_pins ESS_OpenEVR/o_EVR_EVENT_CLK] [get_bd_pins ila_0/probe0]
   connect_bd_net -net ESS_OpenEVR_o_EVR_EVNT_LED [get_bd_ports o_EVR_EVNT_LED] [get_bd_pins ESS_OpenEVR/o_EVR_EVNT_LED]
   connect_bd_net -net ESS_OpenEVR_o_EVR_LINK_LED [get_bd_ports o_EVR_LINK_LED] [get_bd_pins ESS_OpenEVR/o_EVR_LINK_LED]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_N [get_bd_ports o_EVR_TX_N] [get_bd_pins ESS_OpenEVR/o_EVR_TX_N]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_P [get_bd_ports o_EVR_TX_P] [get_bd_pins ESS_OpenEVR/o_EVR_TX_P]
+  connect_bd_net -net ESS_OpenEVR_o_GLBL_LOGIC_CLK [get_bd_pins ESS_OpenEVR/o_GLBL_LOGIC_CLK] [get_bd_pins ila_0/probe1]
   connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
+  connect_bd_net -net Net [get_bd_ports dio_onewire_b_0] [get_bd_pins digitalIO_0/dio_onewire_b]
+  connect_bd_net -net Net1 [get_bd_pins ESS_OpenEVR/o_DEBUG] [get_bd_pins debug_slice/Din] [get_bd_pins ila_0/probe2]
   connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
+  connect_bd_net -net digitalIO_0_dio_led_bot_out [get_bd_ports dio_led_bot_out_0] [get_bd_pins digitalIO_0/dio_led_bot_out]
+  connect_bd_net -net digitalIO_0_dio_led_top_out [get_bd_ports dio_led_top_out_0] [get_bd_pins digitalIO_0/dio_led_top_out]
+  connect_bd_net -net digitalIO_0_dio_n_in [get_bd_ports dio_n_in_0] [get_bd_pins digitalIO_0/dio_n_in]
+  connect_bd_net -net digitalIO_0_dio_oe_n_out [get_bd_ports dio_oe_n_out_0] [get_bd_pins digitalIO_0/dio_oe_n_out]
+  connect_bd_net -net digitalIO_0_dio_p_in [get_bd_ports dio_p_in_0] [get_bd_pins digitalIO_0/dio_p_in]
+  connect_bd_net -net digitalIO_0_dio_term_en_out [get_bd_ports dio_term_en_out_0] [get_bd_pins digitalIO_0/dio_term_en_out]
+  connect_bd_net -net dio_clk_n_in_0_1 [get_bd_ports dio_clk_n_in_0] [get_bd_pins digitalIO_0/dio_clk_n_in]
+  connect_bd_net -net dio_clk_p_in_0_1 [get_bd_ports dio_clk_p_in_0] [get_bd_pins digitalIO_0/dio_clk_p_in]
+  connect_bd_net -net dio_n_out_0_1 [get_bd_ports dio_n_out_0] [get_bd_pins digitalIO_0/dio_n_out]
+  connect_bd_net -net dio_p_out_0_1 [get_bd_ports dio_p_out_0] [get_bd_pins digitalIO_0/dio_p_out]
   connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]
   connect_bd_net -net i_EVR_RX_N_0_1 [get_bd_ports i_EVR_RX_N] [get_bd_pins ESS_OpenEVR/i_EVR_RX_N]
   connect_bd_net -net i_EVR_RX_P_0_1 [get_bd_ports i_EVR_RX_P] [get_bd_pins ESS_OpenEVR/i_EVR_RX_P]
   connect_bd_net -net i_SY87730_LOCKED_1 [get_bd_ports i_SY87730_LOCKED] [get_bd_pins GPIO_Bus/i_SY87730_LOCKED]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
+  connect_bd_net -net i_ZYNQ_CLKREF0_N_1 [get_bd_ports i_ZYNQ_CLKREF0_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_N]
+  connect_bd_net -net i_ZYNQ_CLKREF0_P_0_1 [get_bd_ports i_ZYNQ_CLKREF0_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_P]
+  connect_bd_net -net i_ZYNQ_MRCC_LVDS_N_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_N]
+  connect_bd_net -net i_ZYNQ_MRCC_LVDS_P_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_P]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ila_0/clk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
   connect_bd_net -net processing_system7_0_SPI0_MOSI_O [get_bd_ports o_SY87730_PROGDI] [get_bd_pins processing_system7_0/SPI0_MOSI_O]
   connect_bd_net -net processing_system7_0_SPI0_SCLK_O [get_bd_ports o_SY87730_PROGSK] [get_bd_pins processing_system7_0/SPI0_SCLK_O]
   connect_bd_net -net processing_system7_0_SPI0_SS_O [get_bd_pins SPI0_SS_O_Not/Op1] [get_bd_pins processing_system7_0/SPI0_SS_O]
   connect_bd_net -net spiSSTieOff_dout [get_bd_pins SPI0_SS_VCC/dout] [get_bd_pins processing_system7_0/SPI0_SS_I]
   connect_bd_net -net util_vector_logic_0_Res [get_bd_ports o_SY87730_PROGCS] [get_bd_pins SPI0_SS_O_Not/Res]
-  connect_bd_net -net i_ZYNQ_CLKREF0_N_0_1 [get_bd_ports i_ZYNQ_CLKREF0_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_N]
-  connect_bd_net -net i_ZYNQ_CLKREF0_P_0_1 [get_bd_ports i_ZYNQ_CLKREF0_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_P]
-  connect_bd_net -net i_ZYNQ_MRCC_LVDS_N_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_N]
-  connect_bd_net -net i_ZYNQ_MRCC_LVDS_P_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_P]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins DIO_Output_config/dout] [get_bd_pins digitalIO_0/output_config] [get_bd_pins digitalIO_0/term_config]
+  connect_bd_net -net xlslice_0_Dout [get_bd_pins debug_slice/Dout] [get_bd_pins digitalIO_0/from_FPGA_0]
+  connect_bd_net -net xlslice_1_Dout [get_bd_pins debug_slice/Dout1] [get_bd_pins digitalIO_0/from_FPGA_1]
+  connect_bd_net -net xlslice_2_Dout [get_bd_pins debug_slice/Dout2] [get_bd_pins digitalIO_0/from_FPGA_2]
+  connect_bd_net -net xlslice_3_Dout [get_bd_pins debug_slice/Dout3] [get_bd_pins digitalIO_0/from_FPGA_3]
+  connect_bd_net -net xlslice_4_Dout [get_bd_pins debug_slice/Dout4] [get_bd_pins digitalIO_0/from_FPGA_4]
 
   # Create address segments
 

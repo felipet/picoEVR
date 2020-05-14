@@ -1,7 +1,7 @@
 --Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2019.2 (lin64) Build 2708876 Wed Nov  6 21:39:14 MST 2019
---Date        : Wed May 13 09:59:11 2020
+--Date        : Thu May 14 09:33:59 2020
 --Host        : ci0011853 running 64-bit Debian GNU/Linux 10 (buster)
 --Command     : generate_target picoevr_system_arch_wrapper.bd
 --Design      : picoevr_system_arch_wrapper
@@ -34,6 +34,17 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
+    dio_clk_n_in_0 : in STD_LOGIC;
+    dio_clk_p_in_0 : in STD_LOGIC;
+    dio_led_bot_out_0 : out STD_LOGIC;
+    dio_led_top_out_0 : out STD_LOGIC;
+    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_onewire_b_0 : inout STD_LOGIC;
+    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
     i_SY87730_LOCKED : in STD_LOGIC;
@@ -42,8 +53,8 @@ entity picoevr_system_arch_wrapper is
     i_ZYNQ_MRCC_LVDS_N : in STD_LOGIC;
     i_ZYNQ_MRCC_LVDS_P : in STD_LOGIC;
     o_EVR_ENABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
-    o_EVR_EVNT_LED : out STD_LOGIC;
-    o_EVR_LINK_LED : out STD_LOGIC;
+    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
     o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
@@ -56,12 +67,28 @@ end picoevr_system_arch_wrapper;
 architecture STRUCTURE of picoevr_system_arch_wrapper is
   component picoevr_system_arch is
   port (
+    i_EVR_RX_N : in STD_LOGIC;
+    i_EVR_RX_P : in STD_LOGIC;
     i_SY87730_LOCKED : in STD_LOGIC;
+    i_ZYNQ_CLKREF0_N : in STD_LOGIC;
+    i_ZYNQ_CLKREF0_P : in STD_LOGIC;
+    i_ZYNQ_MRCC_LVDS_N : in STD_LOGIC;
+    i_ZYNQ_MRCC_LVDS_P : in STD_LOGIC;
     o_EVR_ENABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_TX_N : out STD_LOGIC;
+    o_EVR_TX_P : out STD_LOGIC;
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGDI : out STD_LOGIC;
     o_SY87730_PROGSK : out STD_LOGIC;
     o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+    FIXED_IO_ddr_vrn : inout STD_LOGIC;
+    FIXED_IO_ddr_vrp : inout STD_LOGIC;
+    FIXED_IO_ps_srstb : inout STD_LOGIC;
+    FIXED_IO_ps_clk : inout STD_LOGIC;
+    FIXED_IO_ps_porb : inout STD_LOGIC;
     DDR_cas_n : inout STD_LOGIC;
     DDR_cke : inout STD_LOGIC;
     DDR_ck_n : inout STD_LOGIC;
@@ -77,22 +104,17 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
     DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
-    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
-    FIXED_IO_ddr_vrn : inout STD_LOGIC;
-    FIXED_IO_ddr_vrp : inout STD_LOGIC;
-    FIXED_IO_ps_srstb : inout STD_LOGIC;
-    FIXED_IO_ps_clk : inout STD_LOGIC;
-    FIXED_IO_ps_porb : inout STD_LOGIC;
-    o_EVR_LINK_LED : out STD_LOGIC;
-    o_EVR_TX_N : out STD_LOGIC;
-    o_EVR_TX_P : out STD_LOGIC;
-    o_EVR_EVNT_LED : out STD_LOGIC;
-    i_EVR_RX_P : in STD_LOGIC;
-    i_ZYNQ_MRCC_LVDS_N : in STD_LOGIC;
-    i_ZYNQ_MRCC_LVDS_P : in STD_LOGIC;
-    i_ZYNQ_CLKREF0_N : in STD_LOGIC;
-    i_ZYNQ_CLKREF0_P : in STD_LOGIC;
-    i_EVR_RX_N : in STD_LOGIC
+    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_led_top_out_0 : out STD_LOGIC;
+    dio_led_bot_out_0 : out STD_LOGIC;
+    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_onewire_b_0 : inout STD_LOGIC;
+    dio_clk_p_in_0 : in STD_LOGIC;
+    dio_clk_n_in_0 : in STD_LOGIC;
+    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
+    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 )
   );
   end component picoevr_system_arch;
 begin
@@ -119,6 +141,17 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
+      dio_clk_n_in_0 => dio_clk_n_in_0,
+      dio_clk_p_in_0 => dio_clk_p_in_0,
+      dio_led_bot_out_0 => dio_led_bot_out_0,
+      dio_led_top_out_0 => dio_led_top_out_0,
+      dio_n_in_0(4 downto 0) => dio_n_in_0(4 downto 0),
+      dio_n_out_0(4 downto 0) => dio_n_out_0(4 downto 0),
+      dio_oe_n_out_0(4 downto 0) => dio_oe_n_out_0(4 downto 0),
+      dio_onewire_b_0 => dio_onewire_b_0,
+      dio_p_in_0(4 downto 0) => dio_p_in_0(4 downto 0),
+      dio_p_out_0(4 downto 0) => dio_p_out_0(4 downto 0),
+      dio_term_en_out_0(4 downto 0) => dio_term_en_out_0(4 downto 0),
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
       i_SY87730_LOCKED => i_SY87730_LOCKED,
@@ -127,8 +160,8 @@ picoevr_system_arch_i: component picoevr_system_arch
       i_ZYNQ_MRCC_LVDS_N => i_ZYNQ_MRCC_LVDS_N,
       i_ZYNQ_MRCC_LVDS_P => i_ZYNQ_MRCC_LVDS_P,
       o_EVR_ENABLE(0) => o_EVR_ENABLE(0),
-      o_EVR_EVNT_LED => o_EVR_EVNT_LED,
-      o_EVR_LINK_LED => o_EVR_LINK_LED,
+      o_EVR_EVNT_LED(0) => o_EVR_EVNT_LED(0),
+      o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
       o_EVR_TX_N => o_EVR_TX_N,
       o_EVR_TX_P => o_EVR_TX_P,
       o_SI5346_RST_rn(0) => o_SI5346_RST_rn(0),

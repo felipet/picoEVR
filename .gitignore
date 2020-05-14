@@ -2,3 +2,4 @@
 **/*.jou
 fpga/output/
 **/vitis_*.str
+.Xil/

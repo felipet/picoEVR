@@ -1,3 +1,6 @@
 [submodule "fpga/srcs/libs/ess-openevr"]
 	path = fpga/srcs/libs/ess-openevr
 	url = git@github.com:icshwi/ess-openevr.git
+[submodule "fpga/srcs/libs/hdl-ip-repo"]
+	path = fpga/srcs/libs/hdl-ip-repo
+	url = git@gitlab.esss.lu.se:icshwi/hdl-ip-repo.git
