@@ -184,7 +184,7 @@ set obj [get_filesets utils_1]
 set obj [get_filesets utils_1]
 
 # Add IP repository
-set_property ip_repo_paths "$origin_dir/../libs/" [current_project]
+set_property ip_repo_paths "$origin_dir/../libs/hdl-ip-repo" [current_project]
 update_ip_catalog
 
 # Adding sources referenced in BDs, if not already added
@@ -478,7 +478,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: ESS_OpenEVR, and set properties
-  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1.1 ESS_OpenEVR ]
+  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1 ESS_OpenEVR ]
 
   # Create instance: ila_0, and set properties
   set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
