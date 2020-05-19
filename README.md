@@ -8,6 +8,20 @@ This project will be based on:
 - [The OpenEVR project](https://github.com/jpietari/mrf-openevr)
 - The carrier board for the picoZED from TTU (aka [FPGA-based IOC](https://confluence.esss.lu.se/display/HAR/picoZED+carrier+board))
 
+## Cloning the repository
+
+The project uses nested submodules (submodules within submodules) to source the various IP blocks used in the design. To correctly initialise the submodules, run the following:
+
+`    git clone --branch openevr --recurse-submodules git@gitlab.esss.lu.se:tallinn-in-kind/picoevr.git`
+
+...or
+
+`    git clone git@gitlab.esss.lu.se:tallinn-in-kind/picoevr.git && cd picoevr`
+
+`    git checkout openevr`
+
+`    git submodule update --init --recursive`
+
 ## Startup steps
 
 In order to start playing with the project, the complete Vivado project structure must be generated.
