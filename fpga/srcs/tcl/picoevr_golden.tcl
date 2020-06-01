@@ -478,7 +478,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: ESS_OpenEVR, and set properties
-  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1 ESS_OpenEVR ]
+  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.4 ESS_OpenEVR ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
