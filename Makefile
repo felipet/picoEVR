@@ -37,8 +37,8 @@ XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's
 all: project synthesis implementation bitstream
 
 project:        $(OUTPUT_DIR)/$(PROJECT_NAME).xpr
-synthesis:      $(BUILD_DIR)/$(PROJECT_TOP).dcp 
-implementation: $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp 
+synthesis:      $(BUILD_DIR)/$(PROJECT_TOP).dcp
+implementation: $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp
 bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
 
 
@@ -47,22 +47,22 @@ bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
 
 #project file generation.
 $(OUTPUT_DIR)/$(PROJECT_NAME).xpr:
-	@echo -e "\033[1;92mCreating project: $@\033[0m"
+	@echo "\033[1;92mBuilding project: $@\033[0m"
 	@mkdir -p $(LOG_DIR)
 	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" 2>&1 | tee $(LOG_DIR)/project.log
 
 $(BUILD_DIR)/$(PROJECT_TOP).dcp:
-	@echo -e "\033[1;92mRunning synthesis: $@\033[0m"
+	@echo "\033[1;92mRunning synthesis: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
-	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs synth | tee $(LOG_DIR)/project.log 
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs synth | tee $(LOG_DIR)/project.log
 
-$(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp: 
-	@echo -e "\033[1;92mRunning implementation: $@\033[0m"
+$(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp:
+	@echo "\033[1;92mRunning implementation: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
 	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs impl | tee $(LOG_DIR)/project.log
 
 $(BUILD_DIR)/$(PROJECT_TOP).bit:
-	@echo -e "\033[1;92mGenerating bitstream: $@\033[0m"
+	@echo "\033[1;92mGenerating bitstream: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
 	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs  bitstream | tee $(LOG_DIR)/project.log
 
@@ -70,7 +70,7 @@ $(BUILD_DIR)/$(PROJECT_TOP).bit:
 # --------
 
 clean:
-	@echo -e "\033[1;92mDeleting all generated files\033[0m"
+	@echo "\033[1;92mDeleting all generated files\033[0m"
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(LOG_DIR)
 	@rm -f *.jou
@@ -83,7 +83,6 @@ clean:
 	@rm -rf `find . -maxdepth 2 -type d -name '.Xil'`
 
 clean_project:
-	@echo -e "\033[1;92mDeleting project files\033[0m"
+	@echo "\033[1;92mDeleting project files\033[0m"
 	@rm -rf $(OUTPUT_DIR)/$(PROJECT_DIR)
 	@rm -rf `find . -maxdepth 2 -type d -name '.Xil'`
-
