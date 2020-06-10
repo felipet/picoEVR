@@ -21,6 +21,7 @@ BUILD_DIR          := $(shell grep -e 'directory.build'  $(CONFIG_NAME) | sed 's
 SRC_ROOT           := $(shell grep -e 'directory.src'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 OUTPUT_DIR         := $(shell grep -e 'directory.output' $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 LOG_DIR            := $(shell grep -e 'directory.log'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+BINARY_DIR         := $(shell grep -e 'directory.bin'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 PROJECT_NAME       := $(shell grep -e 'project.name'     $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 PROJECT_DIR        := $(shell grep -e 'project.dir'      $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 PROJECT_TOP        := $(shell grep -e 'project.name'     $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
@@ -65,6 +66,57 @@ $(BUILD_DIR)/$(PROJECT_TOP).bit:
 	@echo "\033[1;92mGenerating bitstream: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
 	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs  bitstream | tee $(LOG_DIR)/project.log
+
+# Binary collect & stamping
+# ---------------
+
+BINARY_PATH := $(subst .bit,,$(shell find $(OUTPUT_DIR)/vivado_project -name "*.bit"))
+ifneq ($(BINARY_PATH),)
+DEBUG := $(shell find $(OUTPUT_DIR)/vivado_project -name "*.ltx")
+BINARY_NAME := $(shell basename $(BINARY_PATH))
+EXT := ".bit"
+ifneq ($(DEBUG),)
+EXT := .bit .ltx
+endif
+else
+EXT :=
+endif
+
+out_dir:
+	@mkdir -p $(BINARY_DIR)
+
+gather_bit: out_dir
+ifeq ($(EXT),)
+	@echo "\033[1;31mError:\033[0m No binary found"
+else
+	@echo "\033[1;92mFiles will be stored at: \033[0m$(BINARY_DIR)"
+	$(foreach e, $(EXT), $(shell cp $(BINARY_PATH)$(e) $(BINARY_DIR)/))
+	@echo "\033[1;92mFound files:\033[0m"
+	@ls $(BINARY_DIR)
+endif
+
+# Check wether the compiled products come from a tagged version or not
+RELEASE ?= $(shell git describe --exact-match --tags $(git log -n1 --pretty='%h') 2> /dev/null)
+HASH := $(shell git rev-parse --short HEAD)
+# Timestamp output files?
+TS ?= $(shell grep -e 'project.tsoutputs' $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+ifeq ($(TS),yes)
+DATE = "_$(shell date +%Y%m%d_%H%M)"
+endif
+
+stamp: gather_bit
+ifeq ($(EXT),)
+	@echo "\033[1;31mError:\033[0m No binary to rename"
+else
+ifeq ($(RELEASE),)
+	@echo "\033[1;92mBinaries will be tagged using the commit hash\033[0m ($(HASH))"
+	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(HASH)$(DATE)$(e)))
+else
+	@echo "\033[1;92mBinaries will be tagged using the release tag\033[0m ($(RELEASE))"
+	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(RELEASE)$(DATE)$(e)))
+endif
+	@ls $(BINARY_DIR)
+endif
 
 # Cleaning
 # --------

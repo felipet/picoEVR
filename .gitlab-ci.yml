@@ -1,0 +1,32 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 2
+
+stages:
+  - build
+
+.build_template: &build_template
+  tags:
+    - xilinx
+  stage: build
+  image: registry.esss.lu.se/ics-docker/vivado:${VIVADO_VER}
+  artifacts:
+    paths:
+      - fpga/output/build/binaries
+    expire_in: 8 week
+  when: always
+
+build-dev:
+  <<: *build_template
+  script:
+    - make
+    - TS=yes make stamp
+  when: manual
+
+build-tag:
+  <<: *build_template
+  script:
+    - make
+    - make stamp
+  only:
+    - tags

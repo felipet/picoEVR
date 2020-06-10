@@ -2,8 +2,10 @@ directory.src: .
 directory.output: fpga/output
 directory.build: fpga/output/build
 directory.log: fpga/output/log
+directory.bin: fpga/output/build/binaries
 
 project.name: picoEVR
 project.part: xc7z030sbg485-1
 project.dir: vivado_project
 project.tcl: fpga/srcs/tcl/picoevr_golden.tcl
+project.tsoutputs: no
