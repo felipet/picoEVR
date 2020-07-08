@@ -3,3 +3,7 @@
 fpga/output/
 **/vitis_*.str
 .Xil/
+
+# For python
+**/__pycache__/
+
