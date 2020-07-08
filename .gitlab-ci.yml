@@ -4,6 +4,7 @@ variables:
 
 stages:
   - build
+  - test
 
 .build_template: &build_template
   tags:
@@ -30,3 +31,19 @@ build-tag:
     - make stamp
   only:
     - tags
+
+test:
+  tags:
+    - xilinx
+  stage: test
+  image: registry.esss.lu.se/ics-docker/vivado:${VIVADO_VER}
+  artifacts:
+    paths:
+      - sw/test/iladata.csv
+    expire_in: 1 week
+  script:
+    - python3.7 -m venv venv
+    - source venv/bin/activate
+    - pip install pandas
+    - python sw/test/TestRunner.py sw/test/iladata.csv rx_data ${TEST_EVENT_CODE} --acq ${ACQ_TCL}
+  when: manual

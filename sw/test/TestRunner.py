@@ -14,8 +14,8 @@ __status__    = "Early"
 
 import sys
 
-if not sys.version_info >= (3, 5):
-   print("Error: Python is too old! Please, update to a version newer than 3.5.")
+if not sys.version_info >= (3, 7):
+   print("Error: Python is too old! Please, update to a version newer than 3.7.")
    exit(-1)
 
 import argparse
