@@ -70,9 +70,9 @@ $(BUILD_DIR)/$(PROJECT_TOP).bit:
 # Binary collect & stamping
 # ---------------
 
-BINARY_PATH := $(subst .bit,,$(shell find $(OUTPUT_DIR)/vivado_project -name "*.bit"))
+BINARY_PATH := $(subst .bit,,$(shell find $(BUILD_DIR) -name "*.bit"))
 ifneq ($(BINARY_PATH),)
-DEBUG := $(shell find $(OUTPUT_DIR)/vivado_project -name "*.ltx")
+DEBUG := $(shell find $(BUILD_DIR) -name "*.ltx")
 BINARY_NAME := $(shell basename $(BINARY_PATH))
 EXT := ".bit"
 ifneq ($(DEBUG),)

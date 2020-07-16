@@ -183,5 +183,6 @@ if { $runimpl == 1 } {
 if { $runbitgen == 1 } {
     puts "Running bitstream generation..."
     open_run impl_1
+    write_debug_probes -force -quiet $build_dir/$prj_name.ltx
     write_bitstream -force $build_dir/$prj_name.bit
 }
