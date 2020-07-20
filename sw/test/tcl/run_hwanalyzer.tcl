@@ -23,7 +23,7 @@ endgroup
 set_property CONTROL.TRIGGER_POSITION 1 [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]
 set_property TRIGGER_COMPARE_VALUE eq16'hAA00 [get_hw_probes picoevr_system_arch_i/ESS_OpenEVR/U0/evr_mgt_wrapper/i_upstream/rx_data -of_objects [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]]
 run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]
-wait_on_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]
+wait_on_hw_ila -timeout 1 [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]
 display_hw_ila_data [upload_hw_ila_data [get_hw_ilas -of_objects [get_hw_devices xc7z030_1] -filter {CELL_NAME=~"u_ila_0"}]]
 write_hw_ila_data -csv_file {sw/test/iladata.csv} hw_ila_data_2
 close_hw_manager
