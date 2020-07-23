@@ -478,7 +478,9 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
   # Create instance: ESS_OpenEVR, and set properties
-  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.4 ESS_OpenEVR ]
+  set ESS_OpenEVR [ create_bd_cell -type ip -vlnv ESS:ess:ess_openEVR:0.1 ESS_OpenEVR ]
+  # Enable debug clock in the OpenEVR IP
+  set_property -dict [list CONFIG.g_HAS_DEBUG_CLK {true}] $ESS_OpenEVR
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -545,7 +547,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
    CONFIG.PCW_ENET_RESET_ENABLE {1} \
    CONFIG.PCW_ENET_RESET_SELECT {Share reset pin} \
    CONFIG.PCW_EN_CLK0_PORT {1} \
-   CONFIG.PCW_EN_CLK1_PORT {0} \
+   CONFIG.PCW_EN_CLK1_PORT {1} \
    CONFIG.PCW_EN_CLK2_PORT {0} \
    CONFIG.PCW_EN_CLK3_PORT {0} \
    CONFIG.PCW_EN_DDR {1} \
@@ -577,7 +579,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR0 {11} \
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR1 {1} \
    CONFIG.PCW_FCLK1_PERIPHERAL_CLKSRC {IO PLL} \
-   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR0 {1} \
+   CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR0 {11} \
    CONFIG.PCW_FCLK1_PERIPHERAL_DIVISOR1 {1} \
    CONFIG.PCW_FCLK2_PERIPHERAL_CLKSRC {IO PLL} \
    CONFIG.PCW_FCLK2_PERIPHERAL_DIVISOR0 {1} \
@@ -590,11 +592,11 @@ proc cr_bd_picoevr_system_arch { parentCell } {
    CONFIG.PCW_FCLK_CLK2_BUF {FALSE} \
    CONFIG.PCW_FCLK_CLK3_BUF {FALSE} \
    CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
-   CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {100} \
+   CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {88} \
    CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ {33.333333} \
    CONFIG.PCW_FPGA3_PERIPHERAL_FREQMHZ {50} \
    CONFIG.PCW_FPGA_FCLK0_ENABLE {1} \
-   CONFIG.PCW_FPGA_FCLK1_ENABLE {0} \
+   CONFIG.PCW_FPGA_FCLK1_ENABLE {1} \
    CONFIG.PCW_FPGA_FCLK2_ENABLE {0} \
    CONFIG.PCW_FPGA_FCLK3_ENABLE {0} \
    CONFIG.PCW_GPIO_BASEADDR {0xE000A000} \
@@ -1013,6 +1015,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_net -net i_ZYNQ_MRCC_LVDS_N_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_N]
   connect_bd_net -net i_ZYNQ_MRCC_LVDS_P_0_1 [get_bd_ports i_ZYNQ_MRCC_LVDS_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC_LVDS_P]
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ESS_OpenEVR/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk]
+  connect_bd_net -net processing_system7_0_FCLK_CLK1 [get_bd_pins processing_system7_0/FCLK_CLK1] [get_bd_pins ESS_OpenEVR/i_DEBUG_clk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
   connect_bd_net -net processing_system7_0_SPI0_MOSI_O [get_bd_ports o_SY87730_PROGDI] [get_bd_pins processing_system7_0/SPI0_MOSI_O]
   connect_bd_net -net processing_system7_0_SPI0_SCLK_O [get_bd_ports o_SY87730_PROGSK] [get_bd_pins processing_system7_0/SPI0_SCLK_O]
