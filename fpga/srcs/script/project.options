@@ -7,5 +7,8 @@ directory.bin: fpga/output/build/binaries
 project.name: picoEVR
 project.part: xc7z030sbg485-1
 project.dir: vivado_project
-project.tcl: fpga/srcs/tcl/picoevr_golden.tcl
+project.tcl: fpga/srcs/tcl/picoevr_base.tcl
 project.tsoutputs: no
+
+firmware.carrier: revD
+firmware.en_dbg: yes

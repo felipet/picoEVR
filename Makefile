@@ -29,6 +29,13 @@ PROJECT_TCL        := $(shell grep -e 'project.tcl'      $(CONFIG_NAME) | sed 's
 HDL_FILES_FILENAME := $(shell grep -e 'files.hdl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 
+# Parameteres for the project generation
+# --------------------------------------
+# Specify which carrier board hw version will be used
+CARRIER_REV  := $(shell grep -e 'firmware.carrier'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+# Enable debugging ILA cores
+ENABLE_DEBUG := $(shell grep -e 'firmware.en_db'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+
 
 # -------
 # Targets
@@ -43,6 +50,9 @@ implementation: $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp
 bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
 
 
+bin_dir:
+	@mkdir -p $(BINARY_DIR)
+
 # Vivado workflow steps
 # ---------------------
 
@@ -50,22 +60,22 @@ bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
 $(OUTPUT_DIR)/$(PROJECT_NAME).xpr:
 	@echo "\033[1;92mBuilding project: $@\033[0m"
 	@mkdir -p $(LOG_DIR)
-	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" 2>&1 | tee $(LOG_DIR)/project.log
+	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" --carrier_rev "$(CARRIER_REV)" --enable_debug "$(ENABLE_DEBUG)" 2>&1 | tee $(LOG_DIR)/project.log
 
 $(BUILD_DIR)/$(PROJECT_TOP).dcp:
 	@echo "\033[1;92mRunning synthesis: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
-	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs synth | tee $(LOG_DIR)/project.log
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs synth $(CARRIER_REV) | tee $(LOG_DIR)/project.log
 
 $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp:
 	@echo "\033[1;92mRunning implementation: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
-	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs impl | tee $(LOG_DIR)/project.log
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs impl $(CARRIER_REV) | tee $(LOG_DIR)/project.log
 
-$(BUILD_DIR)/$(PROJECT_TOP).bit:
+$(BUILD_DIR)/$(PROJECT_TOP).bit: bin_dir
 	@echo "\033[1;92mGenerating bitstream: $@\033[0m"
 	@mkdir -p $(BUILD_DIR)
-	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs  bitstream | tee $(LOG_DIR)/project.log
+	@vivado -mode batch -source $(SCRIPT_DIR)/run_steps.tcl -tclargs  bitstream $(CARRIER_REV) | tee $(LOG_DIR)/project.log
 
 # Binary collect & stamping
 # ---------------
@@ -82,10 +92,7 @@ else
 EXT :=
 endif
 
-out_dir:
-	@mkdir -p $(BINARY_DIR)
-
-gather_bit: out_dir
+gather_bit: bin_dir
 ifeq ($(EXT),)
 	@echo "\033[1;31mError:\033[0m No binary found"
 else
@@ -110,10 +117,10 @@ ifeq ($(EXT),)
 else
 ifeq ($(RELEASE),)
 	@echo "\033[1;92mBinaries will be tagged using the commit hash\033[0m ($(HASH))"
-	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(HASH)$(DATE)$(e)))
+	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(CARRIER_REV)_$(HASH)$(DATE)$(e)))
 else
 	@echo "\033[1;92mBinaries will be tagged using the release tag\033[0m ($(RELEASE))"
-	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(RELEASE)$(DATE)$(e)))
+	$(foreach e, $(EXT), $(shell mv $(BINARY_DIR)/$(BINARY_NAME)$(e) $(BINARY_DIR)/$(PROJECT_NAME)_$(CARRIER_REV)_$(RELEASE)$(DATE)$(e)))
 endif
 	@ls $(BINARY_DIR)
 endif
