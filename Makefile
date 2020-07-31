@@ -32,9 +32,9 @@ XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's
 # Parameteres for the project generation
 # --------------------------------------
 # Specify which carrier board hw version will be used
-CARRIER_REV  := $(shell grep -e 'firmware.carrier'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+CARRIER_REV  ?= $(shell grep -e 'firmware.carrier' $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 # Enable debugging ILA cores
-ENABLE_DEBUG := $(shell grep -e 'firmware.en_db'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+ENABLE_DEBUG ?= $(shell grep -e 'firmware.en_db'   $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 
 
 # -------
@@ -80,7 +80,7 @@ $(BUILD_DIR)/$(PROJECT_TOP).bit: bin_dir
 # Binary collect & stamping
 # ---------------
 
-BINARY_PATH := $(subst .bit,,$(shell find $(BUILD_DIR) -name "*.bit"))
+BINARY_PATH := $(subst .bit,,$(shell find $(BUILD_DIR) -name "*.bit" 2> /dev/null))
 ifneq ($(BINARY_PATH),)
 DEBUG := $(shell find $(BUILD_DIR) -name "*.ltx")
 BINARY_NAME := $(shell basename $(BINARY_PATH))

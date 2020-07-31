@@ -27,8 +27,8 @@ build-dev:
 build-tag:
   <<: *build_template
   script:
-    - make
-    - make stamp
+    - CARRIER_REV=revD make
+    - CARRIER_REV=revD make stamp
   only:
     - tags
 
