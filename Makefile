@@ -58,7 +58,7 @@ bin_dir:
 
 #project file generation.
 $(OUTPUT_DIR)/$(PROJECT_NAME).xpr:
-	@echo "\033[1;92mBuilding project: $@\033[0m"
+	@echo "\033[1;92mBuilding project: $@ ($(CARRIER_REV))\033[0m"
 	@mkdir -p $(LOG_DIR)
 	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" --carrier_rev "$(CARRIER_REV)" --enable_debug "$(ENABLE_DEBUG)" 2>&1 | tee $(LOG_DIR)/project.log
 

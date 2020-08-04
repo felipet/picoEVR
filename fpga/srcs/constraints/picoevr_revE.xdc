@@ -22,9 +22,9 @@ set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC1
 set_property -dict {PACKAGE_PIN Y14 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC2];
 
 # From Si5332A-D-GM1 Out 3
-set_property PACKAGE_PIN V5 [get_ports i_Zynq_CLKREF1_N]; # MGTREFCLK1N_112
+# set_property PACKAGE_PIN V5 [get_ports i_ZYNQ_CLKREF1_N]; # MGTREFCLK1N_112
 # From Si5332A-D-GM1 Out 4
-set_property PACKAGE_PIN V9 [get_ports i_Zynq_CLKREF0_N]; # MGTREFCLK0N_112
+set_property PACKAGE_PIN V9 [get_ports i_ZYNQ_CLKREF0_N]; # MGTREFCLK0N_112
 
 # =============================================================================
 # OpenEVR
@@ -51,14 +51,14 @@ set_property -dict {PACKAGE_PIN V19  IOSTANDARD LVCMOS33} [get_ports   MRF_UNIVM
 # =============================================================================
 # LEMO Connectors
 # =============================================================================
-set_property -dict {PACKAGE_PIN N8   IOSTANDARD LVCMOS18} [get_ports b_LEMO_0_IO];  # IO_L5P_T0_34
-set_property -dict {PACKAGE_PIN P8   IOSTANDARD LVCMOS18} [get_ports o_LEMO_0_DIR]; # IO_L5N_T0_34
-set_property -dict {PACKAGE_PIN AB18 IOSTANDARD LVCMOS33} [get_ports b_LEMO_1_IO];  # IO_L16P_T2_13
-set_property -dict {PACKAGE_PIN AB19 IOSTANDARD LVCMOS33} [get_ports o_LEMO_1_DIR]; # IO_L16N_T2_13
-set_property -dict {PACKAGE_PIN M8   IOSTANDARD LVCMOS18} [get_ports b_LEMO_2_IO];  # IO_L6P_T0_34
-set_property -dict {PACKAGE_PIN M7   IOSTANDARD LVCMOS18} [get_ports o_LEMO_2_DIR]; # IO_L6N_T0_VREF_34
-set_property -dict {PACKAGE_PIN AB21 IOSTANDARD LVCMOS33} [get_ports b_LEMO_3_IO];  # IO_L15P_T2_DQS_13
-set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports o_LEMO_3_DIR]; # IO_L15P_T2_DQS_13
+set_property -dict {PACKAGE_PIN N8   IOSTANDARD LVCMOS18} [get_ports {b_LEMO_IO[0]}];  # IO_L5P_T0_34
+set_property -dict {PACKAGE_PIN P8   IOSTANDARD LVCMOS18} [get_ports {o_LEMO_DIR[0]}]; # IO_L5N_T0_34
+set_property -dict {PACKAGE_PIN AB18 IOSTANDARD LVCMOS33} [get_ports {b_LEMO_IO[1]}];  # IO_L16P_T2_13
+set_property -dict {PACKAGE_PIN AB19 IOSTANDARD LVCMOS33} [get_ports {o_LEMO_DIR[1]}]; # IO_L16N_T2_13
+set_property -dict {PACKAGE_PIN M8   IOSTANDARD LVCMOS18} [get_ports {b_LEMO_IO[2]}];  # IO_L6P_T0_34
+set_property -dict {PACKAGE_PIN M7   IOSTANDARD LVCMOS18} [get_ports {o_LEMO_DIR[2]}]; # IO_L6N_T0_VREF_34
+set_property -dict {PACKAGE_PIN AB21 IOSTANDARD LVCMOS33} [get_ports {b_LEMO_IO[3]}];  # IO_L15P_T2_DQS_13
+set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports {o_LEMO_DIR[3]}]; # IO_L15P_T2_DQS_13
 
 # =============================================================================
 # DIO FMC CARD
