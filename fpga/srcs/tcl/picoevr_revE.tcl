@@ -89,14 +89,19 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set dio_term_en_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_term_en_out_0 ]
   set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
   set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
+  set i_LEMO_I [ create_bd_port -dir I -from 3 -to 0 i_LEMO_I ]
   set i_ZYNQ_CLKREF0_N [ create_bd_port -dir I i_ZYNQ_CLKREF0_N ]
   set i_ZYNQ_CLKREF0_P [ create_bd_port -dir I i_ZYNQ_CLKREF0_P ]
+  set i_ZYNQ_CLKREF1_N [ create_bd_port -dir I i_ZYNQ_CLKREF1_N ]
+  set i_ZYNQ_CLKREF1_P [ create_bd_port -dir I i_ZYNQ_CLKREF1_P ]
   set i_ZYNQ_MRCC1 [ create_bd_port -dir I i_ZYNQ_MRCC1 ]
   set i_ZYNQ_MRCC2 [ create_bd_port -dir I i_ZYNQ_MRCC2 ]
   set o_EVR_EVNT_LED [ create_bd_port -dir O -from 0 -to 0 o_EVR_EVNT_LED ]
   set o_EVR_LINK_LED [ create_bd_port -dir O -from 0 -to 0 -type data o_EVR_LINK_LED ]
   set o_EVR_TX_N [ create_bd_port -dir O o_EVR_TX_N ]
   set o_EVR_TX_P [ create_bd_port -dir O o_EVR_TX_P ]
+  set o_LEMO_DIR [ create_bd_port -dir O -from 3 -to 0 o_LEMO_DIR ]
+  set o_LEMO_O [ create_bd_port -dir O -from 3 -to 0 o_LEMO_O ]
 
   # Create instance: DIO_Output_config, and set properties
   set DIO_Output_config [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 DIO_Output_config ]
@@ -121,6 +126,36 @@ proc cr_bd_picoevr_system_arch { parentCell } {
     CONFIG.g_CARRIER_VER $carrier_hw_rev \
     CONFIG.g_HAS_DEBUG_CLK {true} \
   ] $ESS_OpenEVR
+
+  # Create instance: LEMO_DIR, and set properties
+  set LEMO_DIR [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 LEMO_DIR ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {1} \
+   CONFIG.CONST_WIDTH {1} \
+ ] $LEMO_DIR
+
+  # Create instance: LEMO_DIR_concat, and set properties
+  set LEMO_DIR_concat [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 LEMO_DIR_concat ]
+  set_property -dict [ list \
+   CONFIG.IN0_WIDTH {1} \
+   CONFIG.IN1_WIDTH {1} \
+   CONFIG.IN2_WIDTH {1} \
+   CONFIG.IN3_WIDTH {1} \
+   CONFIG.NUM_PORTS {4} \
+ ] $LEMO_DIR_concat
+
+  # Create instance: LEMO_IO_concat, and set properties
+  set LEMO_IO_concat [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 LEMO_IO_concat ]
+  set_property -dict [ list \
+   CONFIG.NUM_PORTS {4} \
+ ] $LEMO_IO_concat
+
+  # Create instance: LEMO_OUT, and set properties
+  set LEMO_OUT [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 LEMO_OUT ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {1} \
+   CONFIG.CONST_WIDTH {1} \
+ ] $LEMO_OUT
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -152,6 +187,9 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_net -net Net1 [get_bd_pins ESS_OpenEVR/o_DEBUG] [get_bd_pins debug_slice/Din]
   connect_bd_net -net ESS_OpenEVR_i_MRCC1_CLK [get_bd_ports i_ZYNQ_MRCC1] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC1]
   connect_bd_net -net ESS_OpenEVR_i_MRCC2_CLK [get_bd_ports i_ZYNQ_MRCC2] [get_bd_pins ESS_OpenEVR/i_DEBUG_clk]
+  connect_bd_net -net LEMO_DIR_concat_dout [get_bd_ports o_LEMO_DIR] [get_bd_pins LEMO_DIR_concat/dout]
+  connect_bd_net -net LEMO_DIR_dout [get_bd_pins LEMO_DIR/dout] [get_bd_pins LEMO_DIR_concat/In0] [get_bd_pins LEMO_DIR_concat/In1] [get_bd_pins LEMO_DIR_concat/In2] [get_bd_pins LEMO_DIR_concat/In3]
+  connect_bd_net -net LEMO_OUT_dout [get_bd_pins LEMO_IO_concat/In0] [get_bd_pins LEMO_IO_concat/In1] [get_bd_pins LEMO_IO_concat/In2] [get_bd_pins LEMO_IO_concat/In3] [get_bd_pins LEMO_OUT/dout]
   connect_bd_net -net Net [get_bd_ports dio_onewire_b_0] [get_bd_pins digitalIO_0/dio_onewire_b]
   connect_bd_net -net digitalIO_0_dio_led_bot_out [get_bd_ports dio_led_bot_out_0] [get_bd_pins digitalIO_0/dio_led_bot_out]
   connect_bd_net -net digitalIO_0_dio_led_top_out [get_bd_ports dio_led_top_out_0] [get_bd_pins digitalIO_0/dio_led_top_out]
@@ -168,6 +206,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ESS_OpenEVR/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins ESS_OpenEVR/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
+  connect_bd_net -net xlconcat_0_dout [get_bd_ports o_LEMO_O] [get_bd_pins LEMO_IO_concat/dout]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins DIO_Output_config/dout] [get_bd_pins digitalIO_0/output_config] [get_bd_pins digitalIO_0/term_config]
   connect_bd_net -net xlslice_0_Dout [get_bd_pins debug_slice/Dout] [get_bd_pins digitalIO_0/from_FPGA_0]
   connect_bd_net -net xlslice_1_Dout [get_bd_pins debug_slice/Dout1] [get_bd_pins digitalIO_0/from_FPGA_1]

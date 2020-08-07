@@ -49,12 +49,16 @@ entity picoevr_system_arch_wrapper is
     i_EVR_RX_P : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
+    i_ZYNQ_CLKREF1_N : in STD_LOGIC;
+    i_ZYNQ_CLKREF1_P : in STD_LOGIC;
     i_ZYNQ_MRCC1 : in STD_LOGIC;
     i_ZYNQ_MRCC2 : in STD_LOGIC;
     o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
-    o_EVR_TX_P : out STD_LOGIC
+    o_EVR_TX_P : out STD_LOGIC;
+    o_LEMO_DIR : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    b_LEMO_IO : inout STD_LOGIC_VECTOR ( 3 downto 0 )
   );
 end picoevr_system_arch_wrapper;
 
@@ -102,10 +106,23 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     i_ZYNQ_MRCC2 : in STD_LOGIC;
-    i_ZYNQ_MRCC1 : in STD_LOGIC
+    i_ZYNQ_MRCC1 : in STD_LOGIC;
+    o_LEMO_DIR : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    o_LEMO_O : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    i_LEMO_I : in STD_LOGIC_VECTOR ( 3 downto 0 )
   );
   end component picoevr_system_arch;
+
+  -- Separate in/out signals for IO
+  signal s_LEMO_O, s_LEMO_DIR : std_logic_vector( 3 downto 0 );
+
 begin
+
+-- Instantiate tri-state buffers for LEMOs
+gen_lemo_tbufs : for I in 0 to 3 generate
+    b_LEMO_IO(I) <= s_LEMO_O(I) when s_LEMO_DIR(I) = '1' else 'Z';
+end generate gen_lemo_tbufs;
+
 picoevr_system_arch_i: component picoevr_system_arch
      port map (
       DDR_addr(14 downto 0) => DDR_addr(14 downto 0),
@@ -146,9 +163,15 @@ picoevr_system_arch_i: component picoevr_system_arch
       i_ZYNQ_CLKREF0_P => i_ZYNQ_CLKREF0_P,
       i_ZYNQ_MRCC1 => i_ZYNQ_MRCC1,
       i_ZYNQ_MRCC2 => i_ZYNQ_MRCC2,
+      i_LEMO_I(3 downto 0) => b_LEMO_IO(3 downto 0),
       o_EVR_EVNT_LED(0) => o_EVR_EVNT_LED(0),
       o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
       o_EVR_TX_N => o_EVR_TX_N,
-      o_EVR_TX_P => o_EVR_TX_P
+      o_EVR_TX_P => o_EVR_TX_P,
+      o_LEMO_DIR(3 downto 0) => s_LEMO_DIR,
+      o_LEMO_O(3 downto 0) => s_LEMO_O(3 downto 0)
     );
+
+    o_LEMO_DIR <= s_LEMO_DIR;
+
 end STRUCTURE;
