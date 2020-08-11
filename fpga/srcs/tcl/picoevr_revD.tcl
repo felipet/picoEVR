@@ -55,7 +55,9 @@ proc create_hier_cell_GPIO_Bus { parentCell nameHier } {
 }
 
 # Proc to create BD picoevr_system_arch
-proc cr_bd_picoevr_system_arch { parentCell } {
+proc cr_bd_picoevr_system_arch { parentCell bd_name} {
+
+  upvar $bd_name design_name
 
   # CHANGE DESIGN NAME HERE
   set design_name picoevr_system_arch
@@ -130,17 +132,6 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
 
   # Create ports
-  set dio_clk_n_in_0 [ create_bd_port -dir I dio_clk_n_in_0 ]
-  set dio_clk_p_in_0 [ create_bd_port -dir I dio_clk_p_in_0 ]
-  set dio_led_bot_out_0 [ create_bd_port -dir O dio_led_bot_out_0 ]
-  set dio_led_top_out_0 [ create_bd_port -dir O dio_led_top_out_0 ]
-  set dio_n_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_n_in_0 ]
-  set dio_n_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_n_out_0 ]
-  set dio_oe_n_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_oe_n_out_0 ]
-  set dio_onewire_b_0 [ create_bd_port -dir IO dio_onewire_b_0 ]
-  set dio_p_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_p_in_0 ]
-  set dio_p_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_p_out_0 ]
-  set dio_term_en_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_term_en_out_0 ]
   set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
   set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
   set i_SY87730_LOCKED [ create_bd_port -dir I -type data i_SY87730_LOCKED ]
@@ -161,13 +152,6 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   # Create instance: GPIO_Bus
   create_hier_cell_GPIO_Bus [current_bd_instance .] GPIO_Bus
 
-  # Create instance: DIO_Output_config, and set properties
-  set DIO_Output_config [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 DIO_Output_config ]
-  set_property -dict [ list \
-   CONFIG.CONST_VAL {0} \
-   CONFIG.CONST_WIDTH {5} \
- ] $DIO_Output_config
-
   # Create instance: SPI0_SS_O_Not, and set properties
   set SPI0_SS_O_Not [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 SPI0_SS_O_Not ]
   set_property -dict [ list \
@@ -180,12 +164,6 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   set SPI0_SS_VCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SPI0_SS_VCC ]
   # Create instance: Si5346_RST_N, and set properties
   set Si5346_RST_N [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 Si5346_RST_N ]
-
-  # Create instance: debug_slice
-  create_hier_cell_debug_slice [current_bd_instance .] debug_slice
-
-  # Create instance: digitalIO_0, and set properties
-  set digitalIO_0 [ create_bd_cell -type ip -vlnv ess.eu:icshwi:digitalIO:1.0 digitalIO_0 ]
 
   # Create instance: evr_clk_en, and set properties
   set evr_clk_en [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 evr_clk_en ]
@@ -226,19 +204,7 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_N [get_bd_ports o_EVR_TX_N] [get_bd_pins ESS_OpenEVR/o_EVR_TX_N]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_P [get_bd_ports o_EVR_TX_P] [get_bd_pins ESS_OpenEVR/o_EVR_TX_P]
   connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
-  connect_bd_net -net Net [get_bd_ports dio_onewire_b_0] [get_bd_pins digitalIO_0/dio_onewire_b]
-  connect_bd_net -net Net1 [get_bd_pins ESS_OpenEVR/o_DEBUG] [get_bd_pins debug_slice/Din]
   connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
-  connect_bd_net -net digitalIO_0_dio_led_bot_out [get_bd_ports dio_led_bot_out_0] [get_bd_pins digitalIO_0/dio_led_bot_out]
-  connect_bd_net -net digitalIO_0_dio_led_top_out [get_bd_ports dio_led_top_out_0] [get_bd_pins digitalIO_0/dio_led_top_out]
-  connect_bd_net -net digitalIO_0_dio_n_in [get_bd_ports dio_n_in_0] [get_bd_pins digitalIO_0/dio_n_in]
-  connect_bd_net -net digitalIO_0_dio_oe_n_out [get_bd_ports dio_oe_n_out_0] [get_bd_pins digitalIO_0/dio_oe_n_out]
-  connect_bd_net -net digitalIO_0_dio_p_in [get_bd_ports dio_p_in_0] [get_bd_pins digitalIO_0/dio_p_in]
-  connect_bd_net -net digitalIO_0_dio_term_en_out [get_bd_ports dio_term_en_out_0] [get_bd_pins digitalIO_0/dio_term_en_out]
-  connect_bd_net -net dio_clk_n_in_0_1 [get_bd_ports dio_clk_n_in_0] [get_bd_pins digitalIO_0/dio_clk_n_in]
-  connect_bd_net -net dio_clk_p_in_0_1 [get_bd_ports dio_clk_p_in_0] [get_bd_pins digitalIO_0/dio_clk_p_in]
-  connect_bd_net -net dio_n_out_0_1 [get_bd_ports dio_n_out_0] [get_bd_pins digitalIO_0/dio_n_out]
-  connect_bd_net -net dio_p_out_0_1 [get_bd_ports dio_p_out_0] [get_bd_pins digitalIO_0/dio_p_out]
   connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]
   connect_bd_net -net i_EVR_RX_N_0_1 [get_bd_ports i_EVR_RX_N] [get_bd_pins ESS_OpenEVR/i_EVR_RX_N]
   connect_bd_net -net i_EVR_RX_P_0_1 [get_bd_ports i_EVR_RX_P] [get_bd_pins ESS_OpenEVR/i_EVR_RX_P]
@@ -256,12 +222,6 @@ proc cr_bd_picoevr_system_arch { parentCell } {
   connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins ESS_OpenEVR/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
   connect_bd_net -net spiSSTieOff_dout [get_bd_pins SPI0_SS_VCC/dout] [get_bd_pins processing_system7_0/SPI0_SS_I]
   connect_bd_net -net util_vector_logic_0_Res [get_bd_ports o_SY87730_PROGCS] [get_bd_pins SPI0_SS_O_Not/Res]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins DIO_Output_config/dout] [get_bd_pins digitalIO_0/output_config] [get_bd_pins digitalIO_0/term_config]
-  connect_bd_net -net xlslice_0_Dout [get_bd_pins debug_slice/Dout] [get_bd_pins digitalIO_0/from_FPGA_0]
-  connect_bd_net -net xlslice_1_Dout [get_bd_pins debug_slice/Dout1] [get_bd_pins digitalIO_0/from_FPGA_1]
-  connect_bd_net -net xlslice_2_Dout [get_bd_pins debug_slice/Dout2] [get_bd_pins digitalIO_0/from_FPGA_2]
-  connect_bd_net -net xlslice_3_Dout [get_bd_pins debug_slice/Dout3] [get_bd_pins digitalIO_0/from_FPGA_3]
-  connect_bd_net -net xlslice_4_Dout [get_bd_pins debug_slice/Dout4] [get_bd_pins digitalIO_0/from_FPGA_4]
 
   # Create address segments
   assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs ESS_OpenEVR/s_axi/reg0] -force

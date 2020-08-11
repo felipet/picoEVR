@@ -12,3 +12,4 @@ project.tsoutputs: no
 
 firmware.carrier: revD
 firmware.en_dbg: yes
+firmware.en_dio: yes

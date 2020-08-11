@@ -15,7 +15,6 @@ IMPORT_PRODUCTS ?= 0
 SCRIPT_DIR=fpga/srcs/script
 CONFIG_NAME=$(SCRIPT_DIR)/project.options
 
-
 # read config file into variables
 BUILD_DIR          := $(shell grep -e 'directory.build'  $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 SRC_ROOT           := $(shell grep -e 'directory.src'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
@@ -35,7 +34,8 @@ XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's
 CARRIER_REV  ?= $(shell grep -e 'firmware.carrier' $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 # Enable debugging ILA cores
 ENABLE_DEBUG ?= $(shell grep -e 'firmware.en_db'   $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
-
+# Enable the DIO FMC in the design
+ENABLE_DIO   ?= $(shell grep -e 'firmware.en_dio'  $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 
 # -------
 # Targets
@@ -49,7 +49,6 @@ synthesis:      $(BUILD_DIR)/$(PROJECT_TOP).dcp
 implementation: $(BUILD_DIR)/$(PROJECT_TOP)_routed.dcp
 bitstream:      $(BUILD_DIR)/$(PROJECT_TOP).bit
 
-
 bin_dir:
 	@mkdir -p $(BINARY_DIR)
 
@@ -60,7 +59,7 @@ bin_dir:
 $(OUTPUT_DIR)/$(PROJECT_NAME).xpr:
 	@echo "\033[1;92mBuilding project: $@ ($(CARRIER_REV))\033[0m"
 	@mkdir -p $(LOG_DIR)
-	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" --carrier_rev "$(CARRIER_REV)" --enable_debug "$(ENABLE_DEBUG)" 2>&1 | tee $(LOG_DIR)/project.log
+	@vivado -mode batch -m64 -source $(PROJECT_TCL) -tclarg --origin_dir "fpga/srcs/tcl/" --carrier_rev "$(CARRIER_REV)" --enable_dio "$(ENABLE_DIO)" --enable_debug "$(ENABLE_DEBUG)" 2>&1 | tee $(LOG_DIR)/project.log
 
 $(BUILD_DIR)/$(PROJECT_TOP).dcp:
 	@echo "\033[1;92mRunning synthesis: $@\033[0m"

@@ -34,17 +34,6 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
-    dio_clk_n_in_0 : in STD_LOGIC;
-    dio_clk_p_in_0 : in STD_LOGIC;
-    dio_led_bot_out_0 : out STD_LOGIC;
-    dio_led_top_out_0 : out STD_LOGIC;
-    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_onewire_b_0 : inout STD_LOGIC;
-    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
@@ -65,17 +54,6 @@ end picoevr_system_arch_wrapper;
 architecture STRUCTURE of picoevr_system_arch_wrapper is
   component picoevr_system_arch is
   port (
-    dio_clk_n_in_0 : in STD_LOGIC;
-    dio_clk_p_in_0 : in STD_LOGIC;
-    dio_led_bot_out_0 : out STD_LOGIC;
-    dio_led_top_out_0 : out STD_LOGIC;
-    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_onewire_b_0 : inout STD_LOGIC;
-    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
@@ -146,17 +124,6 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
-      dio_clk_n_in_0 => dio_clk_n_in_0,
-      dio_clk_p_in_0 => dio_clk_p_in_0,
-      dio_led_bot_out_0 => dio_led_bot_out_0,
-      dio_led_top_out_0 => dio_led_top_out_0,
-      dio_n_in_0(4 downto 0) => dio_n_in_0(4 downto 0),
-      dio_n_out_0(4 downto 0) => dio_n_out_0(4 downto 0),
-      dio_oe_n_out_0(4 downto 0) => dio_oe_n_out_0(4 downto 0),
-      dio_onewire_b_0 => dio_onewire_b_0,
-      dio_p_in_0(4 downto 0) => dio_p_in_0(4 downto 0),
-      dio_p_out_0(4 downto 0) => dio_p_out_0(4 downto 0),
-      dio_term_en_out_0(4 downto 0) => dio_term_en_out_0(4 downto 0),
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
       i_ZYNQ_CLKREF0_N => i_ZYNQ_CLKREF0_N,

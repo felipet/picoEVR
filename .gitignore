@@ -3,6 +3,7 @@
 fpga/output/
 **/vitis_*.str
 .Xil/
+**/picoevr_system_arch_wrapper_rev*_final.vhd
 
 # For python
 **/__pycache__/

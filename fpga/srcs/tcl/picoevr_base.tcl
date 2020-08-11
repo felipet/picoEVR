@@ -80,10 +80,11 @@ if { $::argc > 0 } {
   for {set i 0} {$i < $::argc} {incr i} {
     set option [string trim [lindex $::argv $i]]
     switch -regexp -- $option {
-      "--origin_dir"   { incr i; set origin_dir [lindex $::argv $i] }
+      "--origin_dir"   { incr i; set origin_dir      [lindex $::argv $i] }
       "--project_name" { incr i; set _xil_proj_name_ [lindex $::argv $i] }
-      "--carrier_rev"  { incr i; set carrier_hw_rev [lindex $::argv $i] }
-      "--enable_debug" { incr i; set generate_ilas [lindex $::argv $i] }
+      "--carrier_rev"  { incr i; set carrier_hw_rev  [lindex $::argv $i] }
+      "--enable_debug" { incr i; set generate_ilas   [lindex $::argv $i] }
+      "--enable_dio"   { incr i; set add_dio         [lindex $::argv $i] }
       "--help"         { print_help }
       default {
         if { [regexp {^-} $option] } {
@@ -100,6 +101,10 @@ set orig_proj_dir "[file normalize "$origin_dir/../../output/vivado_project"]"
 
 # Set the directory path for the new project
 set proj_dir "[file normalize "$origin_dir/../../output/vivado_project"]"
+
+# Top-level HDL wrapper file
+set hdl_dir "${origin_dir}/../bd/picoevr_system_arch/hdl"
+set hdl_wrapper_file "${hdl_dir}/picoevr_system_arch_wrapper_${carrier_hw_rev}.vhd"
 
 # Create project
 create_project ${_xil_proj_name_} "./fpga/output/vivado_project" -part xc7z030sbg485-1
@@ -121,26 +126,6 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
   create_fileset -srcset sources_1
 }
 
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-set files [list \
- [file normalize "${origin_dir}/../bd/picoevr_system_arch/hdl/picoevr_system_arch_wrapper_${carrier_hw_rev}.vhd"] \
-]
-add_files -norecurse -fileset $obj $files
-
-# Set 'sources_1' fileset file properties for remote files
-set file "$origin_dir/../bd/picoevr_system_arch/hdl/picoevr_system_arch_wrapper_${carrier_hw_rev}.vhd"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "VHDL" -objects $file_obj
-
-
-# Set 'sources_1' fileset file properties for local files
-# None
-
-# Set 'sources_1' fileset properties
-set obj [get_filesets sources_1]
-set_property -name "top" -value "picoevr_system_arch_wrapper" -objects $obj
 
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
@@ -148,28 +133,29 @@ if {[string equal [get_filesets -quiet constrs_1] ""]} {
 }
 
 # Set 'constrs_1' fileset object
-set obj [get_filesets constrs_1]
+set constr_obj [get_filesets constrs_1]
 
-# Add/Import constrs file and set constrs file properties
-set file "[file normalize "$origin_dir/../constraints/picoevr_${carrier_hw_rev}.xdc"]"
-set file_added [add_files -norecurse -fileset $obj [list $file]]
-set file "$origin_dir/../constraints/picoevr_${carrier_hw_rev}.xdc"
-set file [file normalize $file]
-set_property target_constrs_file "$origin_dir/../constraints/picoevr_${carrier_hw_rev}.xdc" $obj
+# Variable to hold list of constraints files
+set constr_file ""
 
-if {[string equal $generate_ilas "yes"]} {
-  puts "Debug cores enabled"
-  set file "[file normalize "$origin_dir/../constraints/picoevr_${carrier_hw_rev}_dbg.xdc"]"
-  set file_added [add_files -norecurse -fileset $obj [list $file]]
-  set file "$origin_dir/../constraints/picoevr_${carrier_hw_rev}_dbg.xdc"
+# Process to add a constraints file to the project
+proc add_constr_file { origin_dir file_name constr_obj constr_file} {
+  upvar $constr_file file
+  set file "[file normalize "$origin_dir/../constraints/${file_name}"]"
+  set file_added [add_files -norecurse -fileset $constr_obj [list $file]]
+  set file "$origin_dir/../constraints/${file_name}"
   set file [file normalize $file]
 }
 
-set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
-set_property -name "file_type" -value "XDC" -objects $file_obj
+# Add/Import constrs file and set constrs file properties
+add_constr_file $origin_dir "picoevr_${carrier_hw_rev}.xdc" $constr_obj $constr_file
+set_property target_constrs_file "$origin_dir/../constraints/picoevr_${carrier_hw_rev}.xdc" $constr_obj
 
-# Set 'constrs_1' fileset properties
-set obj [get_filesets constrs_1]
+if {[string equal $generate_ilas "yes"]} {
+  puts "Debug cores enabled"
+  add_constr_file $origin_dir "picoevr_${carrier_hw_rev}_dbg.xdc" $constr_obj $constr_file
+}
+
 
 # Create 'sim_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sim_1] ""]} {
@@ -296,15 +282,158 @@ proc create_hier_cell_debug_slice { parentCell nameHier } {
   current_bd_instance $oldCurInst
 }
 
+# Process to add the required IP and port connections for the FMC-DIO-5ch-ttl
+proc add_dio_to_bd { design_name } {
+
+  variable script_folder
+
+  # Open block design
+  open_bd_design [get_files $design_name.bd]
+
+  # Create instance: DIO_Output_config, and set properties
+  set DIO_Output_config [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 DIO_Output_config ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+   CONFIG.CONST_WIDTH {5} \
+ ] $DIO_Output_config
+
+  # Create ports
+  set dio_clk_n_in_0 [ create_bd_port -dir I dio_clk_n_in_0 ]
+  set dio_clk_p_in_0 [ create_bd_port -dir I dio_clk_p_in_0 ]
+  set dio_led_bot_out_0 [ create_bd_port -dir O dio_led_bot_out_0 ]
+  set dio_led_top_out_0 [ create_bd_port -dir O dio_led_top_out_0 ]
+  set dio_n_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_n_in_0 ]
+  set dio_n_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_n_out_0 ]
+  set dio_oe_n_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_oe_n_out_0 ]
+  set dio_onewire_b_0 [ create_bd_port -dir IO dio_onewire_b_0 ]
+  set dio_p_in_0 [ create_bd_port -dir O -from 4 -to 0 dio_p_in_0 ]
+  set dio_p_out_0 [ create_bd_port -dir I -from 4 -to 0 dio_p_out_0 ]
+  set dio_term_en_out_0 [ create_bd_port -dir O -from 4 -to 0 dio_term_en_out_0 ]
+
+  # Create instance: debug_slice
+  create_hier_cell_debug_slice [current_bd_instance .] debug_slice
+
+  # Create instance: digitalIO_0, and set properties
+  set digitalIO_0 [ create_bd_cell -type ip -vlnv ess.eu:icshwi:digitalIO:1.0 digitalIO_0 ]
+
+  # Connections
+  connect_bd_net -net Net1 [get_bd_pins ESS_OpenEVR/o_DEBUG] [get_bd_pins debug_slice/Din]
+  connect_bd_net -net Net [get_bd_ports dio_onewire_b_0] [get_bd_pins digitalIO_0/dio_onewire_b]
+  connect_bd_net -net digitalIO_0_dio_led_bot_out [get_bd_ports dio_led_bot_out_0] [get_bd_pins digitalIO_0/dio_led_bot_out]
+  connect_bd_net -net digitalIO_0_dio_led_top_out [get_bd_ports dio_led_top_out_0] [get_bd_pins digitalIO_0/dio_led_top_out]
+  connect_bd_net -net digitalIO_0_dio_n_in [get_bd_ports dio_n_in_0] [get_bd_pins digitalIO_0/dio_n_in]
+  connect_bd_net -net digitalIO_0_dio_oe_n_out [get_bd_ports dio_oe_n_out_0] [get_bd_pins digitalIO_0/dio_oe_n_out]
+  connect_bd_net -net digitalIO_0_dio_p_in [get_bd_ports dio_p_in_0] [get_bd_pins digitalIO_0/dio_p_in]
+  connect_bd_net -net digitalIO_0_dio_term_en_out [get_bd_ports dio_term_en_out_0] [get_bd_pins digitalIO_0/dio_term_en_out]
+  connect_bd_net -net dio_clk_n_in_0_1 [get_bd_ports dio_clk_n_in_0] [get_bd_pins digitalIO_0/dio_clk_n_in]
+  connect_bd_net -net dio_clk_p_in_0_1 [get_bd_ports dio_clk_p_in_0] [get_bd_pins digitalIO_0/dio_clk_p_in]
+  connect_bd_net -net dio_n_out_0_1 [get_bd_ports dio_n_out_0] [get_bd_pins digitalIO_0/dio_n_out]
+  connect_bd_net -net dio_p_out_0_1 [get_bd_ports dio_p_out_0] [get_bd_pins digitalIO_0/dio_p_out]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins DIO_Output_config/dout] [get_bd_pins digitalIO_0/output_config] [get_bd_pins digitalIO_0/term_config]
+  connect_bd_net -net xlslice_0_Dout [get_bd_pins debug_slice/Dout] [get_bd_pins digitalIO_0/from_FPGA_0]
+  connect_bd_net -net xlslice_1_Dout [get_bd_pins debug_slice/Dout1] [get_bd_pins digitalIO_0/from_FPGA_1]
+  connect_bd_net -net xlslice_2_Dout [get_bd_pins debug_slice/Dout2] [get_bd_pins digitalIO_0/from_FPGA_2]
+  connect_bd_net -net xlslice_3_Dout [get_bd_pins debug_slice/Dout3] [get_bd_pins digitalIO_0/from_FPGA_3]
+  connect_bd_net -net xlslice_4_Dout [get_bd_pins debug_slice/Dout4] [get_bd_pins digitalIO_0/from_FPGA_4]
+
+  validate_bd_design
+  save_bd_design
+  # Close block design
+  close_bd_design $design_name
+}
+
+proc add_dio_to_top { top_hdl new_top_name hdl_dir} {
+    # Create new wrapper file
+    # Strip extension from existing wrapper name
+    set new_top [ open $new_top_name  w]
+    # Open existing wrapper for reading
+    set top_fhandle [ open $top_hdl r+ ]
+
+    # Read existing wrapper line-by-line
+    while {[gets $top_fhandle line] >= 0} {
+        if { [string first "port (" $line] != -1 } {
+            # Find entity declaration
+            puts $new_top $line
+            set entity_snip [ open $hdl_dir/picoevr_dio_entity.snip r+]
+            while {[gets $entity_snip e_line] >= 0} {
+                puts $new_top $e_line
+            }
+            close $entity_snip
+            set foundEntity 1
+        } elseif { [string first "port (" $line ] != -1 && $foundEntity == 1 } {
+            # Find component declaration
+            puts $new_top $line
+            set entity_snip [ open $hdl_dir/picoevr_dio_entity.snip r+]
+            while {[gets $entity_snip e_line] >= 0} {
+                puts $new_top $e_line
+            }
+            close $entity_snip
+        } elseif { [string first "port map (" $line ] != -1 && $foundEntity == 1 } {
+            # Find component instantiation
+            puts $new_top $line
+            set portmap_snip [ open $hdl_dir/picoevr_dio_portmap.snip r+]
+            while {[gets $portmap_snip p_line] >= 0} {
+                puts $new_top $p_line
+            }
+            close $portmap_snip
+        } else {
+            # Copy line from existing wrapper to new wrapper
+            puts $new_top $line
+        }
+    }
+
+    # Close all files
+    close $new_top
+    close $top_fhandle
+}
+
 # Load the modules that depend on the hw revision
 set where [file dirname [info script]]
 puts "Sourcing external configuration files..."
 source [file join $where picoevr_${carrier_hw_rev}.tcl]
 
+
 # End of cr_bd_picoevr_system_arch()
-cr_bd_picoevr_system_arch ""
+cr_bd_picoevr_system_arch "" bd_name
 set_property REGISTERED_WITH_MANAGER "1" [get_files picoevr_system_arch.bd ]
 set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files picoevr_system_arch.bd ]
+
+# Strip file extension from existing HDL wrapper file and form new name with extension
+set new_top_file "${hdl_dir}/[file rootname [ file tail $hdl_wrapper_file ]]_final.vhd"
+
+if {[string equal $add_dio "yes"]} {
+    puts "Adding DIO FMC to $bd_name..."
+    # Get full path to block design file
+    add_dio_to_bd $bd_name
+    # Modify top-level HDL wrapper file
+    add_dio_to_top $hdl_wrapper_file $new_top_file $hdl_dir
+    # Add DIO constraints file
+    add_constr_file $origin_dir "picoevr_dio.xdc" $constr_obj $constr_file
+} else {
+    # Copy source wrapper to "final" wrapper
+    file copy -force $hdl_wrapper_file ${new_top_file}
+}
+
+
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+set files [list \
+ [file normalize ${new_top_file}] \
+]
+add_files -norecurse -fileset $obj $files
+
+# Set 'sources_1' fileset file properties for remote files
+set file ${new_top_file}
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
+# Set 'sources_1' fileset properties
+set obj [get_filesets sources_1]
+set_property -name "top" -value "picoevr_system_arch_wrapper" -objects $obj
+
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$constr_file"]]
+set_property -name "file_type" -value "XDC" -objects $file_obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {

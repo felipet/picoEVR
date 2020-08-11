@@ -34,17 +34,6 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
-    dio_clk_n_in_0 : in STD_LOGIC;
-    dio_clk_p_in_0 : in STD_LOGIC;
-    dio_led_bot_out_0 : out STD_LOGIC;
-    dio_led_top_out_0 : out STD_LOGIC;
-    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_onewire_b_0 : inout STD_LOGIC;
-    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
     i_SY87730_LOCKED : in STD_LOGIC;
@@ -103,18 +92,7 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     DDR_dm : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
     DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
-    DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
-    dio_term_en_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_p_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_n_in_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_led_top_out_0 : out STD_LOGIC;
-    dio_led_bot_out_0 : out STD_LOGIC;
-    dio_oe_n_out_0 : out STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_onewire_b_0 : inout STD_LOGIC;
-    dio_clk_p_in_0 : in STD_LOGIC;
-    dio_clk_n_in_0 : in STD_LOGIC;
-    dio_p_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 );
-    dio_n_out_0 : in STD_LOGIC_VECTOR ( 4 downto 0 )
+    DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 )
   );
   end component picoevr_system_arch;
 begin
@@ -141,17 +119,6 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
-      dio_clk_n_in_0 => dio_clk_n_in_0,
-      dio_clk_p_in_0 => dio_clk_p_in_0,
-      dio_led_bot_out_0 => dio_led_bot_out_0,
-      dio_led_top_out_0 => dio_led_top_out_0,
-      dio_n_in_0(4 downto 0) => dio_n_in_0(4 downto 0),
-      dio_n_out_0(4 downto 0) => dio_n_out_0(4 downto 0),
-      dio_oe_n_out_0(4 downto 0) => dio_oe_n_out_0(4 downto 0),
-      dio_onewire_b_0 => dio_onewire_b_0,
-      dio_p_in_0(4 downto 0) => dio_p_in_0(4 downto 0),
-      dio_p_out_0(4 downto 0) => dio_p_out_0(4 downto 0),
-      dio_term_en_out_0(4 downto 0) => dio_term_en_out_0(4 downto 0),
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
       i_SY87730_LOCKED => i_SY87730_LOCKED,
