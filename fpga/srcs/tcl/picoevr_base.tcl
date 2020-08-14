@@ -85,6 +85,7 @@ if { $::argc > 0 } {
       "--carrier_rev"  { incr i; set carrier_hw_rev  [lindex $::argv $i] }
       "--enable_debug" { incr i; set generate_ilas   [lindex $::argv $i] }
       "--enable_dio"   { incr i; set add_dio         [lindex $::argv $i] }
+      "--enable_ecats" { incr i; set add_ecats       [lindex $::argv $i] }
       "--help"         { print_help }
       default {
         if { [regexp {^-} $option] } {
@@ -96,6 +97,13 @@ if { $::argc > 0 } {
   }
 }
 
+# Check if both add_dio and add_ecats are 'yes'. If so, error as only one FMC can
+# be added to the design...
+if {[string equal $add_dio "yes"] && [string equal $add_ecats "yes"]} {
+    puts "ERROR: Both DIO and ECATS FMC have been enabled. Only one FMC can be supported"
+    exit 1
+}
+
 # Set the directory path for the original project from where this script was exported
 set orig_proj_dir "[file normalize "$origin_dir/../../output/vivado_project"]"
 
@@ -104,7 +112,7 @@ set proj_dir "[file normalize "$origin_dir/../../output/vivado_project"]"
 
 # Top-level HDL wrapper file
 set hdl_dir "${origin_dir}/../bd/picoevr_system_arch/hdl"
-set hdl_wrapper_file "${hdl_dir}/picoevr_system_arch_wrapper_${carrier_hw_rev}.vhd"
+set hdl_wrapper_file "picoevr_system_arch_wrapper_${carrier_hw_rev}.vhd"
 
 # Create project
 create_project ${_xil_proj_name_} "./fpga/output/vivado_project" -part xc7z030sbg485-1
@@ -125,7 +133,6 @@ set_property -name "target_language" -value "VHDL" -objects $obj
 if {[string equal [get_filesets -quiet sources_1] ""]} {
   create_fileset -srcset sources_1
 }
-
 
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
@@ -155,7 +162,6 @@ if {[string equal $generate_ilas "yes"]} {
   puts "Debug cores enabled"
   add_constr_file $origin_dir "picoevr_${carrier_hw_rev}_dbg.xdc" $constr_obj $constr_file
 }
-
 
 # Create 'sim_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sim_1] ""]} {
@@ -282,10 +288,13 @@ proc create_hier_cell_debug_slice { parentCell nameHier } {
   current_bd_instance $oldCurInst
 }
 
-# Process to add the required IP and port connections for the FMC-DIO-5ch-ttl
+# Process to add the required IP, ports and connections to the block
+# diagram to support the FMC-DIO-5ch-ttl.
+#
+# Takes the following required arguments:
+# - design_name - name of the block diagram, ( i.e. picoevr_system_arch )
+#
 proc add_dio_to_bd { design_name } {
-
-  variable script_folder
 
   # Open block design
   open_bd_design [get_files $design_name.bd]
@@ -342,19 +351,251 @@ proc add_dio_to_bd { design_name } {
   close_bd_design $design_name
 }
 
-proc add_dio_to_top { top_hdl new_top_name hdl_dir} {
+# Process to add the required IP, ports and connections to the block
+# diagram to support the EtherCAT Slave FMC.
+#
+# Takes the following required arguments:
+# - design_name - name of the block diagram, ( i.e. picoevr_system_arch )
+#
+proc add_ecats_to_bd { design_name } {
+
+  # Open block design
+  open_bd_design [get_files $design_name.bd]
+
+  set clk25 [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 clk25 ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {25000000} \
+   ] $clk25
+
+  # Create ports
+  set fmc_clk_en_o [ create_bd_port -dir O -from 0 -to 0 fmc_clk_en_o ]
+  set led_err_o [ create_bd_port -dir O led_err_o ]
+  set led_link_act_o [ create_bd_port -dir O -from 1 -to 0 led_link_act_o ]
+  set led_run_o [ create_bd_port -dir O led_run_o ]
+  set mii_rx_clk0_i [ create_bd_port -dir I mii_rx_clk0_i ]
+  set mii_rx_clk1_i [ create_bd_port -dir I mii_rx_clk1_i ]
+  set mii_rx_data0_i [ create_bd_port -dir I -from 3 -to 0 mii_rx_data0_i ]
+  set mii_rx_data1_i [ create_bd_port -dir I -from 3 -to 0 mii_rx_data1_i ]
+  set mii_rx_dv0_i [ create_bd_port -dir I mii_rx_dv0_i ]
+  set mii_rx_dv1_i [ create_bd_port -dir I mii_rx_dv1_i ]
+  set mii_rx_err0_i [ create_bd_port -dir I mii_rx_err0_i ]
+  set mii_rx_err1_i [ create_bd_port -dir I mii_rx_err1_i ]
+  set mii_tx_clk0_i [ create_bd_port -dir I mii_tx_clk0_i ]
+  set mii_tx_clk1_i [ create_bd_port -dir I mii_tx_clk1_i ]
+  set mii_tx_data0_o [ create_bd_port -dir O -from 3 -to 0 mii_tx_data0_o ]
+  set mii_tx_data1_o [ create_bd_port -dir O -from 3 -to 0 mii_tx_data1_o ]
+  set mii_tx_en0_o [ create_bd_port -dir O mii_tx_en0_o ]
+  set mii_tx_en1_o [ create_bd_port -dir O mii_tx_en1_o ]
+  set nreset_out [ create_bd_port -dir O -from 0 -to 0 nreset_out ]
+  set phy0_an1_i [ create_bd_port -dir I phy0_an1_i ]
+  set phy0_an2_i [ create_bd_port -dir I phy0_an2_i ]
+  set phy0_an_en_i [ create_bd_port -dir I phy0_an_en_i ]
+  set phy1_an1_i [ create_bd_port -dir I phy1_an1_i ]
+  set phy1_an2_i [ create_bd_port -dir I phy1_an2_i ]
+  set phy1_an_en_i [ create_bd_port -dir I phy1_an_en_i ]
+  set phy_pwdn1_o [ create_bd_port -dir O -from 0 -to 0 phy_pwdn1_o ]
+  set phy_pwdn2_o [ create_bd_port -dir O -from 0 -to 0 phy_pwdn2_o ]
+  set prom_clk_o [ create_bd_port -dir O -type clk prom_clk_o ]
+  set prom_data_ena [ create_bd_port -dir O prom_data_ena ]
+  set prom_data_in [ create_bd_port -dir I prom_data_in ]
+  set prom_data_out [ create_bd_port -dir O prom_data_out ]
+  set sw_strap1_o [ create_bd_port -dir O -from 0 -to 0 sw_strap1_o ]
+  set sw_strap2_o [ create_bd_port -dir O -from 0 -to 0 sw_strap2_o ]
+
+  # Create instance: clk_wiz_0, and set properties
+  set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
+  set_property -dict [ list \
+   CONFIG.CLKIN1_JITTER_PS {400.0} \
+   CONFIG.CLKOUT1_JITTER {356.129} \
+   CONFIG.CLKOUT1_PHASE_ERROR {237.727} \
+   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25} \
+   CONFIG.CLKOUT2_JITTER {226.965} \
+   CONFIG.CLKOUT2_PHASE_ERROR {237.727} \
+   CONFIG.CLKOUT2_USED {true} \
+   CONFIG.MMCM_CLKFBOUT_MULT_F {40.000} \
+   CONFIG.MMCM_CLKIN1_PERIOD {40.000} \
+   CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
+   CONFIG.MMCM_CLKOUT0_DIVIDE_F {40.000} \
+   CONFIG.MMCM_CLKOUT1_DIVIDE {10} \
+   CONFIG.NUM_OUT_CLKS {2} \
+   CONFIG.PRIM_IN_FREQ {25} \
+   CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
+   CONFIG.USE_LOCKED {true} \
+   CONFIG.USE_RESET {false} \
+ ] $clk_wiz_0
+
+  # Create instance: ecat_fmc_clk_en_const_0,  and set properties
+  set ecat_fmc_clk_en_const_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_fmc_clk_en_const_0 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {1} \
+ ] $ecat_fmc_clk_en_const_0
+
+  # Create instance: ecat_slave_const_00, and set properties
+  set ecat_slave_const_00 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_00 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+   CONFIG.CONST_WIDTH {2} \
+ ] $ecat_slave_const_00
+
+  # Create instance: ecat_slave_const_1, and set properties
+  set ecat_slave_const_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_1 ]
+
+  # Create instance: ecat_slave_const_xAA, and set properties
+  set ecat_slave_const_xAA [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_xAA ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {170} \
+   CONFIG.CONST_WIDTH {8} \
+ ] $ecat_slave_const_xAA
+
+  # Create instance: ecat_slave_const_xBB, and set properties
+  set ecat_slave_const_xBB [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_xBB ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {187} \
+   CONFIG.CONST_WIDTH {8} \
+ ] $ecat_slave_const_xBB
+
+  # Create instance: ecat_slave_const_xCC, and set properties
+  set ecat_slave_const_xCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_xCC ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {204} \
+   CONFIG.CONST_WIDTH {8} \
+ ] $ecat_slave_const_xCC
+
+  # Create instance: ecat_slave_const_xDD, and set properties
+  set ecat_slave_const_xDD [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_slave_const_xDD ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {221} \
+   CONFIG.CONST_WIDTH {8} \
+ ] $ecat_slave_const_xDD
+
+  # Create instance: mini_ioc_ecat_slave_0, and set properties
+  set mini_ioc_ecat_slave_0 [ create_bd_cell -type ip -vlnv user.org:user:mini_ioc_ecat_slave:1.0 mini_ioc_ecat_slave_0 ]
+
+  # Create instance: strappiing_const, and set properties
+  set strappiing_const [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 strappiing_const ]
+
+  # Create instance: util_vector_logic_0, and set properties
+  set util_vector_logic_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0 ]
+  set_property -dict [ list \
+   CONFIG.C_OPERATION {or} \
+   CONFIG.C_SIZE {1} \
+   CONFIG.LOGO_FILE {data/sym_orgate.png} \
+ ] $util_vector_logic_0
+
+  # Create instance: util_vector_logic_1, and set properties
+  set util_vector_logic_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_1 ]
+  set_property -dict [ list \
+   CONFIG.C_OPERATION {and} \
+   CONFIG.C_SIZE {1} \
+   CONFIG.LOGO_FILE {data/sym_andgate.png} \
+ ] $util_vector_logic_1
+
+  # Create instance: xlslice_0, and set properties
+  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
+
+  # Create instance: xlslice_1, and set properties
+  set xlslice_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_1 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {1} \
+   CONFIG.DIN_TO {1} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_1
+
+  # Create instance: axi_gpio_0, and set properties
+  set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
+  set_property -dict [ list \
+   CONFIG.C_ALL_OUTPUTS {1} \
+ ] $axi_gpio_0
+
+  # Add additional slave interface to AXI interconnect
+  set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] [get_bd_cells ps7_0_axi_periph]
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net CLK_IN1_D_0_1 [get_bd_intf_ports clk25] [get_bd_intf_pins clk_wiz_0/CLK_IN1_D]
+  connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M01_AXI] [get_bd_intf_pins axi_gpio_0/S_AXI]
+
+  # Create port connections
+  connect_bd_net -net ESS_OpenEVR_o_TS_data [get_bd_pins ESS_OpenEVR/o_TS_data] [get_bd_pins mini_ioc_ecat_slave_0/PDI_GPI]
+  connect_bd_net [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+  connect_bd_net [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
+  connect_bd_net -net MII_RX_CLK0_0_1 [get_bd_ports mii_rx_clk0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_CLK0]
+  connect_bd_net -net MII_RX_CLK1_0_1 [get_bd_ports mii_rx_clk1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_CLK1]
+  connect_bd_net -net MII_RX_DATA0_0_1 [get_bd_ports mii_rx_data0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_DATA0]
+  connect_bd_net -net MII_RX_DATA1_0_1 [get_bd_ports mii_rx_data1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_DATA1]
+  connect_bd_net -net MII_RX_DV0_0_1 [get_bd_ports mii_rx_dv0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_DV0]
+  connect_bd_net -net MII_RX_DV1_0_1 [get_bd_ports mii_rx_dv1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_DV1]
+  connect_bd_net -net MII_RX_ERR0_0_1 [get_bd_ports mii_rx_err0_i]  [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_ERR0]
+  connect_bd_net -net MII_RX_ERR1_0_1 [get_bd_ports mii_rx_err1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_ERR1]
+  connect_bd_net -net MII_TX_CLK0_0_1 [get_bd_ports mii_tx_clk0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_CLK0]
+  connect_bd_net -net MII_TX_CLK1_0_1 [get_bd_ports mii_tx_clk1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_CLK1]
+  connect_bd_net -net PROM_DATA_IN_0_1 [get_bd_ports prom_data_in] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_IN]
+  connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins mini_ioc_ecat_slave_0/CLK25]
+  connect_bd_net -net clk_wiz_0_clk_out2 [get_bd_pins clk_wiz_0/clk_out2] [get_bd_pins mini_ioc_ecat_slave_0/CLK100]
+  connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins util_vector_logic_1/Op2]
+  connect_bd_net -net ecat_slave_const_00_dout [get_bd_pins ecat_slave_const_00/dout] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_SHIFT0] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_SHIFT1]
+  connect_bd_net -net ecat_slave_const_1_dout [get_bd_pins ecat_slave_const_1/dout] [get_bd_pins mini_ioc_ecat_slave_0/PROM_SIZE]
+  connect_bd_net -net ecat_slave_const_2_dout [get_bd_pins ecat_slave_const_xAA/dout] [get_bd_pins mini_ioc_ecat_slave_0/PDI_DIGI_DATA_IN0]
+  connect_bd_net -net ecat_slave_const_xBB_dout [get_bd_pins ecat_slave_const_xBB/dout] [get_bd_pins mini_ioc_ecat_slave_0/PDI_DIGI_DATA_IN1]
+  connect_bd_net -net ecat_slave_const_xCC_dout [get_bd_pins ecat_slave_const_xCC/dout] [get_bd_pins mini_ioc_ecat_slave_0/PDI_DIGI_DATA_IN2]
+  connect_bd_net -net ecat_slave_const_xDD_dout [get_bd_pins ecat_slave_const_xDD/dout] [get_bd_pins mini_ioc_ecat_slave_0/PDI_DIGI_DATA_IN3]
+  connect_bd_net -net mini_ioc_ecat_slave_0_LED_ERR [get_bd_ports led_err_o] [get_bd_pins mini_ioc_ecat_slave_0/LED_ERR]
+  connect_bd_net -net mini_ioc_ecat_slave_0_LED_LINK_ACT [get_bd_ports led_link_act_o] [get_bd_pins mini_ioc_ecat_slave_0/LED_LINK_ACT]
+  connect_bd_net -net mini_ioc_ecat_slave_0_LED_RUN [get_bd_ports led_run_o] [get_bd_pins mini_ioc_ecat_slave_0/LED_RUN]
+  connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_DATA0 [get_bd_ports mii_tx_data0_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_DATA0]
+  connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_DATA1 [get_bd_ports mii_tx_data1_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_DATA1]
+  connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_ENA0 [get_bd_ports mii_tx_en0_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_ENA0]
+  connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_ENA1 [get_bd_ports mii_tx_en1_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_ENA1]
+  connect_bd_net -net mini_ioc_ecat_slave_0_PDI_SOF [get_bd_pins mini_ioc_ecat_slave_0/PDI_SOF] [get_bd_pins util_vector_logic_0/Op2]
+  connect_bd_net -net mini_ioc_ecat_slave_0_PROM_CLK [get_bd_ports prom_clk_o] [get_bd_pins mini_ioc_ecat_slave_0/PROM_CLK]
+  connect_bd_net -net mini_ioc_ecat_slave_0_PROM_DATA_ENA [get_bd_ports prom_data_ena] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_ENA]
+  connect_bd_net -net mini_ioc_ecat_slave_0_PROM_DATA_OUT [get_bd_ports prom_data_out] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_OUT]
+  connect_bd_net -net nMII_LINK1_0_1 [get_bd_ports phy1_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK1]
+  connect_bd_net -net phy0_an1_i [get_bd_ports phy0_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK0]
+  connect_bd_net -net util_vector_logic_0_Res1 [get_bd_pins ESS_OpenEVR/i_TS_req] [get_bd_pins mini_ioc_ecat_slave_0/LATCH_IN0] [get_bd_pins mini_ioc_ecat_slave_0/LATCH_IN1] [get_bd_pins util_vector_logic_0/Res]
+  connect_bd_net -net util_vector_logic_1_Res [get_bd_ports nreset_out] [get_bd_pins mini_ioc_ecat_slave_0/NRESET] [get_bd_pins util_vector_logic_1/Res]
+  connect_bd_net -net xlslice_0_Dout1 [get_bd_pins util_vector_logic_0/Op1] [get_bd_pins xlslice_0/Dout]
+  connect_bd_net -net xlslice_1_Dout [get_bd_pins util_vector_logic_1/Op1] [get_bd_pins xlslice_1/Dout]
+  connect_bd_net -net strappiing_const_dout [get_bd_ports phy_pwdn1_o] [get_bd_ports phy_pwdn2_o] [get_bd_ports sw_strap1_o] [get_bd_ports sw_strap2_o] [get_bd_pins strappiing_const/dout]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ps7_0_axi_periph/M01_ACLK]
+  connect_bd_net [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
+  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins xlslice_0/Din] [get_bd_pins xlslice_1/Din]
+  connect_bd_net -net fmc_clk_en_dout [get_bd_ports fmc_clk_en_o] [get_bd_pins ecat_fmc_clk_en_const_0/dout]
+
+  # Assign memory-mapped address for AXI GPIO
+  assign_bd_address -offset 0x43C10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
+
+  validate_bd_design
+  save_bd_design
+  # Close block design
+  close_bd_design $design_name
+}
+
+# Process to add the required top-level ports, component definition,
+# component instantiation, signals and logic to the HDL wrapper file.
+#
+# Takes the following required arguments:
+#  - top_hdl      - existing top-level HDL wrapper file
+#                   (i.e, picoevr_system_arch_wrapper_revE.vhd )
+#  - new_top_name - new top-level HDL wrapper file that will be generated by
+#                   this process ( i.e., picoevr_system_arch_wrapper_revE_final.vhd )
+#  - hdl_dir      - path to the directory containing the HDL sources
+#                   (HDL wrappers, and required HDL snippets)
+#  - bd_name      - name of the Vivado block design,( i.e. picoevr_system_arch )
+#  - fmc          - Name of the FMC we are adding ( dio / ecats )
+#
+proc add_fmc_to_top { top_hdl new_top_name hdl_dir bd_name fmc } {
     # Create new wrapper file
     # Strip extension from existing wrapper name
-    set new_top [ open $new_top_name  w]
+    set new_top [ open ${hdl_dir}/${new_top_name}  w]
     # Open existing wrapper for reading
-    set top_fhandle [ open $top_hdl r+ ]
-
+    set top_fhandle [ open ${hdl_dir}/${top_hdl} r+ ]
+    set foundEntity 0
     # Read existing wrapper line-by-line
     while {[gets $top_fhandle line] >= 0} {
-        if { [string first "port (" $line] != -1 } {
+        if { [string first "port (" $line] != -1 && $foundEntity == 0} {
             # Find entity declaration
             puts $new_top $line
-            set entity_snip [ open $hdl_dir/picoevr_dio_entity.snip r+]
+            set entity_snip [ open $hdl_dir/picoevr_${fmc}_entity.snip r+]
             while {[gets $entity_snip e_line] >= 0} {
                 puts $new_top $e_line
             }
@@ -363,19 +604,47 @@ proc add_dio_to_top { top_hdl new_top_name hdl_dir} {
         } elseif { [string first "port (" $line ] != -1 && $foundEntity == 1 } {
             # Find component declaration
             puts $new_top $line
-            set entity_snip [ open $hdl_dir/picoevr_dio_entity.snip r+]
-            while {[gets $entity_snip e_line] >= 0} {
-                puts $new_top $e_line
+            # Check for component snip
+            if { [file exist $hdl_dir/picoevr_${fmc}_comp.snip] == 1 } {
+                set comp_snip [ open $hdl_dir/picoevr_${fmc}_comp.snip r+]
+            } else {
+                # Otherwise, use identical entity snip
+                set comp_snip [ open $hdl_dir/picoevr_${fmc}_entity.snip r+]
             }
-            close $entity_snip
+            while {[gets $comp_snip c_line] >= 0} {
+                puts $new_top $c_line
+            }
+            close $comp_snip
         } elseif { [string first "port map (" $line ] != -1 && $foundEntity == 1 } {
             # Find component instantiation
             puts $new_top $line
-            set portmap_snip [ open $hdl_dir/picoevr_dio_portmap.snip r+]
+            set portmap_snip [ open $hdl_dir/picoevr_${fmc}_portmap.snip r+]
             while {[gets $portmap_snip p_line] >= 0} {
                 puts $new_top $p_line
             }
             close $portmap_snip
+        } elseif { [string first "end component ${bd_name}" $line ] != -1 } {
+            puts $new_top $line
+            # If FMC has additional signals in the wrapper
+            if { [file exist $hdl_dir/picoevr_${fmc}_signals.snip] == 1 } {
+                # Check we are at the end of the component declaration
+                set signals_snip [ open $hdl_dir/picoevr_${fmc}_signals.snip r+]
+                while {[gets $signals_snip s_line] >= 0} {
+                    puts $new_top $s_line
+                }
+                close $signals_snip
+            }
+        } elseif { [string first "end STRUCTURE;" $line ] != -1 } {
+            # If FMC has additional signals in the wrapper
+            if { [file exist $hdl_dir/picoevr_${fmc}_logic.snip] == 1 } {
+                # Check we are at the end of the component declaration
+                set logic_snip [ open $hdl_dir/picoevr_${fmc}_logic.snip r+]
+                while {[gets $logic_snip l_line] >= 0} {
+                    puts $new_top $l_line
+                }
+                close $logic_snip
+            }
+            puts $new_top $line
         } else {
             # Copy line from existing wrapper to new wrapper
             puts $new_top $line
@@ -399,31 +668,36 @@ set_property REGISTERED_WITH_MANAGER "1" [get_files picoevr_system_arch.bd ]
 set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files picoevr_system_arch.bd ]
 
 # Strip file extension from existing HDL wrapper file and form new name with extension
-set new_top_file "${hdl_dir}/[file rootname [ file tail $hdl_wrapper_file ]]_final.vhd"
+set new_top_file "[file rootname [ file tail $hdl_wrapper_file ]]_final.vhd"
 
 if {[string equal $add_dio "yes"]} {
     puts "Adding DIO FMC to $bd_name..."
-    # Get full path to block design file
     add_dio_to_bd $bd_name
     # Modify top-level HDL wrapper file
-    add_dio_to_top $hdl_wrapper_file $new_top_file $hdl_dir
+    add_fmc_to_top $hdl_wrapper_file $new_top_file $hdl_dir $bd_name dio
     # Add DIO constraints file
     add_constr_file $origin_dir "picoevr_dio.xdc" $constr_obj $constr_file
+} elseif {[string equal $add_ecats "yes"]} {
+    puts "Adding ECATS FMC to $bd_name..."
+    add_ecats_to_bd $bd_name
+    # Modify top-level HDL wrapper file
+    add_fmc_to_top $hdl_wrapper_file $new_top_file $hdl_dir $bd_name ecats
+    # Add DIO constraints file
+    add_constr_file $origin_dir "picoevr_ecats.xdc" $constr_obj $constr_file
 } else {
     # Copy source wrapper to "final" wrapper
-    file copy -force $hdl_wrapper_file ${new_top_file}
+    file copy -force ${hdl_dir}/${hdl_wrapper_file} ${hdl_dir}/${new_top_file}
 }
-
 
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- [file normalize ${new_top_file}] \
+ [file normalize ${hdl_dir}/${new_top_file}] \
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
-set file ${new_top_file}
+set file ${hdl_dir}/${new_top_file}
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
