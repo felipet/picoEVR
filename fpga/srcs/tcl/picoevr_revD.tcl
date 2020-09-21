@@ -134,6 +134,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   # Create ports
   set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
   set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
+  set i_EVR_SFP_MOD_0 [ create_bd_port -dir I i_EVR_SFP_MOD_0 ]
   set i_SY87730_LOCKED [ create_bd_port -dir I -type data i_SY87730_LOCKED ]
   set i_ZYNQ_CLKREF0_N [ create_bd_port -dir I i_ZYNQ_CLKREF0_N ]
   set i_ZYNQ_CLKREF0_P [ create_bd_port -dir I i_ZYNQ_CLKREF0_P ]
@@ -144,6 +145,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   set o_EVR_LINK_LED [ create_bd_port -dir O -from 0 -to 0 -type data o_EVR_LINK_LED ]
   set o_EVR_TX_N [ create_bd_port -dir O o_EVR_TX_N ]
   set o_EVR_TX_P [ create_bd_port -dir O o_EVR_TX_P ]
+  set o_EVR_TX_DISABLE [ create_bd_port -dir O -from 0 -to 0 o_EVR_TX_DISABLE ]
   set o_SY87730_PROGCS [ create_bd_port -dir O -from 0 -to 0 -type data o_SY87730_PROGCS ]
   set o_SY87730_PROGDI [ create_bd_port -dir O -type data o_SY87730_PROGDI ]
   set o_SY87730_PROGSK [ create_bd_port -dir O -type clk o_SY87730_PROGSK ]
@@ -159,6 +161,13 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
    CONFIG.C_SIZE {1} \
    CONFIG.LOGO_FILE {data/sym_notgate.png} \
  ] $SPI0_SS_O_Not
+
+  # Create instance: EVR_TX_DISABLE, and set properties
+  set EVR_TX_DISABLE [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 EVR_TX_DISABLE ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+   CONFIG.CONST_WIDTH {1} \
+ ] $EVR_TX_DISABLE
 
   # Create instance: SPI0_SS_VCC, and set properties
   set SPI0_SS_VCC [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SPI0_SS_VCC ]
@@ -203,6 +212,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net -net ESS_OpenEVR_o_EVR_LINK_LED [get_bd_ports o_EVR_LINK_LED] [get_bd_pins ESS_OpenEVR/o_EVR_LINK_LED]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_N [get_bd_ports o_EVR_TX_N] [get_bd_pins ESS_OpenEVR/o_EVR_TX_N]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_P [get_bd_ports o_EVR_TX_P] [get_bd_pins ESS_OpenEVR/o_EVR_TX_P]
+  connect_bd_net -net EVR_TX_DISABLE_dout [get_bd_ports o_EVR_TX_DISABLE] [get_bd_pins EVR_TX_DISABLE/dout]
   connect_bd_net -net GPIO_Bus_dout [get_bd_pins GPIO_Bus/dout] [get_bd_pins processing_system7_0/GPIO_I]
   connect_bd_net -net Si5346_RST_N_dout [get_bd_ports o_SI5346_RST_rn] [get_bd_pins Si5346_RST_N/dout]
   connect_bd_net -net evr_clk_en_dout [get_bd_ports o_EVR_ENABLE] [get_bd_pins evr_clk_en/dout]

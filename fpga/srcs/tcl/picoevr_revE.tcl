@@ -80,6 +80,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   # Create ports
   set i_EVR_RX_N [ create_bd_port -dir I i_EVR_RX_N ]
   set i_EVR_RX_P [ create_bd_port -dir I i_EVR_RX_P ]
+  set i_EVR_SFP_MOD_0 [ create_bd_port -dir I i_EVR_SFP_MOD_0 ]
   set i_LEMO_I [ create_bd_port -dir I -from 3 -to 0 i_LEMO_I ]
   set i_ZYNQ_CLKREF0_N [ create_bd_port -dir I i_ZYNQ_CLKREF0_N ]
   set i_ZYNQ_CLKREF0_P [ create_bd_port -dir I i_ZYNQ_CLKREF0_P ]
@@ -91,6 +92,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   set o_EVR_LINK_LED [ create_bd_port -dir O -from 0 -to 0 -type data o_EVR_LINK_LED ]
   set o_EVR_TX_N [ create_bd_port -dir O o_EVR_TX_N ]
   set o_EVR_TX_P [ create_bd_port -dir O o_EVR_TX_P ]
+  set o_EVR_TX_DISABLE [ create_bd_port -dir O -from 0 -to 0 o_EVR_TX_DISABLE ]
   set o_LEMO_DIR [ create_bd_port -dir O -from 3 -to 0 o_LEMO_DIR ]
   set o_LEMO_O [ create_bd_port -dir O -from 3 -to 0 o_LEMO_O ]
 
@@ -104,6 +106,13 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
     CONFIG.g_CARRIER_VER $carrier_hw_rev \
     CONFIG.g_HAS_DEBUG_CLK {true} \
   ] $ESS_OpenEVR
+
+  # Create instance: EVR_TX_DISABLE, and set properties
+  set EVR_TX_DISABLE [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 EVR_TX_DISABLE ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+   CONFIG.CONST_WIDTH {1} \
+ ] $EVR_TX_DISABLE
 
   # Create instance: LEMO_DIR, and set properties
   set LEMO_DIR [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 LEMO_DIR ]
@@ -160,6 +169,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net -net ESS_OpenEVR_o_EVR_LINK_LED [get_bd_ports o_EVR_LINK_LED] [get_bd_pins ESS_OpenEVR/o_EVR_LINK_LED]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_N [get_bd_ports o_EVR_TX_N] [get_bd_pins ESS_OpenEVR/o_EVR_TX_N]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_P [get_bd_ports o_EVR_TX_P] [get_bd_pins ESS_OpenEVR/o_EVR_TX_P]
+  connect_bd_net -net EVR_TX_DISABLE_dout [get_bd_ports o_EVR_TX_DISABLE] [get_bd_pins EVR_TX_DISABLE/dout]
   connect_bd_net -net i_ZYNQ_CLKREF0_N_1 [get_bd_ports i_ZYNQ_CLKREF0_N] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_N]
   connect_bd_net -net i_ZYNQ_CLKREF0_P_0_1 [get_bd_ports i_ZYNQ_CLKREF0_P] [get_bd_pins ESS_OpenEVR/i_ZYNQ_CLKREF0_P]
   connect_bd_net -net ESS_OpenEVR_i_MRCC1_CLK [get_bd_ports i_ZYNQ_MRCC1] [get_bd_pins ESS_OpenEVR/i_ZYNQ_MRCC1]

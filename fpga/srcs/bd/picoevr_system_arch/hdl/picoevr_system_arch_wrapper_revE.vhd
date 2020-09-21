@@ -36,6 +36,7 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_srstb : inout STD_LOGIC;
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
+    i_EVR_SFP_MOD_0 : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
     i_ZYNQ_CLKREF1_N : in STD_LOGIC;
@@ -46,6 +47,7 @@ entity picoevr_system_arch_wrapper is
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_LEMO_DIR : out STD_LOGIC_VECTOR ( 3 downto 0 );
     b_LEMO_IO : inout STD_LOGIC_VECTOR ( 3 downto 0 )
   );
@@ -56,12 +58,14 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
   port (
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
+    i_EVR_SFP_MOD_0 : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
     o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
     FIXED_IO_ddr_vrn : inout STD_LOGIC;
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
@@ -126,6 +130,7 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
+      i_EVR_SFP_MOD_0 => i_EVR_SFP_MOD_0,
       i_ZYNQ_CLKREF0_N => i_ZYNQ_CLKREF0_N,
       i_ZYNQ_CLKREF0_P => i_ZYNQ_CLKREF0_P,
       i_ZYNQ_MRCC1 => i_ZYNQ_MRCC1,
@@ -135,6 +140,7 @@ picoevr_system_arch_i: component picoevr_system_arch
       o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
       o_EVR_TX_N => o_EVR_TX_N,
       o_EVR_TX_P => o_EVR_TX_P,
+      o_EVR_TX_DISABLE(0) => o_EVR_TX_DISABLE(0),
       o_LEMO_DIR(3 downto 0) => s_LEMO_DIR,
       o_LEMO_O(3 downto 0) => s_LEMO_O(3 downto 0)
     );

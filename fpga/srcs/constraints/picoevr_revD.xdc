@@ -103,12 +103,11 @@ set_property -dict {PACKAGE_PIN AB7} [get_ports i_EVR_RX_N]
 # EVR Link LED
 set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVCMOS18} [get_ports o_EVR_LINK_LED]
 set_property -dict {PACKAGE_PIN H6 IOSTANDARD LVCMOS18} [get_ports o_EVR_EVNT_LED]
-
+set_property -dict{PACKAGE_PIN V13  IOSTANDARD LVCMOS33} [get_ports i_EVR_SFP_MOD_0   ];  # "V13.BANK13_LVDS_12_P"
+set_property -dict {PACKAGE_PIN AB3} [get_ports o_EVR_TX_N]
+set_property -dict{PACKAGE_PIN AB11 IOSTANDARD LVCMOS33} [get_ports io_EVR_TX_DISABLE  ];  # "AB11.BANK13_LVDS_9_N"
 #set_property -dict{PACKAGE_PIN Y13  IOSTANDARD  } [get_ports EVR_RX_RATE     ];  # "Y13.BANK13_LVDS_10_N"
 #set_property -dict{PACKAGE_PIN Y12  IOSTANDARD  } [get_ports EVR_RX_LOS      ];  # "Y12.BANK13_LVDS_10_P"
-#set_property -dict{PACKAGE_PIN V13  IOSTANDARD  } [get_ports EVR_MOD_DEF_0   ];  # "V13.BANK13_LVDS_12_P"
-set_property -dict {PACKAGE_PIN AB3} [get_ports o_EVR_TX_N]
-#set_property -dict{PACKAGE_PIN AB11 IOSTANDARD  } [get_ports EVR_TX_DISABLE  ];  # "AB11.BANK13_LVDS_9_N"
 #set_property -dict{PACKAGE_PIN AA11 IOSTANDARD  } [get_ports EVR_TX_FAULT    ];  # "AA11.BANK13_LVDS_9_P"
 #set_property -dict{PACKAGE_PIN V11  IOSTANDARD  } [get_ports EVR_MOD_DEF_1   ];  # "V11.BANK13_LVDS_11_P"
 #set_property -dict{PACKAGE_PIN W11  IOSTANDARD  } [get_ports EVR_MOD_DEF_2   ];  # "W11.BANK13_LVDS_11_N"

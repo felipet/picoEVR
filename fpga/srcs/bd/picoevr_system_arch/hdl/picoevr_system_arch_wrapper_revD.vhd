@@ -36,6 +36,7 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_srstb : inout STD_LOGIC;
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
+    i_EVR_SFP_MOD_0 : in STD_LOGIC;
     i_SY87730_LOCKED : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
@@ -46,6 +47,7 @@ entity picoevr_system_arch_wrapper is
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SI5346_RST_rn : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGDI : out STD_LOGIC;
@@ -58,6 +60,7 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
   port (
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
+    i_EVR_SFP_MOD_0 : in STD_LOGIC;
     i_SY87730_LOCKED : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
@@ -68,6 +71,7 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGCS : out STD_LOGIC_VECTOR ( 0 to 0 );
     o_SY87730_PROGDI : out STD_LOGIC;
     o_SY87730_PROGSK : out STD_LOGIC;
@@ -121,6 +125,7 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
+      i_EVR_SFP_MOD_0 => i_EVR_SFP_MOD_0,
       i_SY87730_LOCKED => i_SY87730_LOCKED,
       i_ZYNQ_CLKREF0_N => i_ZYNQ_CLKREF0_N,
       i_ZYNQ_CLKREF0_P => i_ZYNQ_CLKREF0_P,
@@ -131,6 +136,7 @@ picoevr_system_arch_i: component picoevr_system_arch
       o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
       o_EVR_TX_N => o_EVR_TX_N,
       o_EVR_TX_P => o_EVR_TX_P,
+      o_EVR_TX_DISABLE(0) => o_EVR_TX_DISABLE(0),
       o_SI5346_RST_rn(0) => o_SI5346_RST_rn(0),
       o_SY87730_PROGCS(0) => o_SY87730_PROGCS(0),
       o_SY87730_PROGDI => o_SY87730_PROGDI,
