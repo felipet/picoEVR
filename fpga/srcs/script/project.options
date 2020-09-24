@@ -10,7 +10,7 @@ project.dir: vivado_project
 project.tcl: fpga/srcs/tcl/picoevr_base.tcl
 project.tsoutputs: no
 
-firmware.carrier: revD
+firmware.carrier: revE
 firmware.en_dbg: yes
-firmware.en_dio: yes
+firmware.en_dio: no
 firmware.en_ecats: no
