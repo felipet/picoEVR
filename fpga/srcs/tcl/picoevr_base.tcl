@@ -134,6 +134,158 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
   create_fileset -srcset sources_1
 }
 
+# Set IP repository paths
+set obj [get_filesets sources_1]
+set_property "ip_repo_paths" "[file normalize "$origin_dir/../../srcs/libs/hdl-ip-repo"] [file normalize "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw"]" $obj
+
+# Rebuild user ip_repo's index before adding any source files
+update_ip_catalog -rebuild
+
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+set files [list \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi4_pkg.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_row.vhd"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_sw_pkg.vhd"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_switch.vhd"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_config_pkg.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_components_pkg.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/sizing.vhd"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_functions_pkg.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi_read_ctrl.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi_write_ctrl.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/field_core.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_address_decoder.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_axi.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_core.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_rd_encoder.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_rd_interface.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_shadowing.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_wr_interface.vhdl"] \
+ [file normalize "${origin_dir}/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/picoevr_channel_mapper_top.vhd"] \
+]
+add_files -norecurse -fileset $obj $files
+
+# Set 'sources_1' fileset file properties for remote files
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi4_pkg.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_row.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_SW" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_sw_pkg.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_SW" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/crossbar_switch.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_SW" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_config_pkg.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_components_pkg.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/crossbar_sw/sizing.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_functions_pkg.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi_read_ctrl.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/axi_write_ctrl.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/field_core.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_address_decoder.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_axi.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_core.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_rd_encoder.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_rd_interface.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_shadowing.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/Crossbar_sw_RegMap/register_bank_wr_interface.vhdl"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL 2008" -objects $file_obj
+set_property -name "library" -value "Crossbar_sw_RegMap" -objects $file_obj
+
+set file "$origin_dir/../../srcs/libs/hdl-ip-repo/crossbar_sw/src/hdl/picoevr_channel_mapper_top.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
   create_fileset -constrset constrs_1
@@ -157,6 +309,13 @@ proc add_constr_file { origin_dir file_name constr_obj constr_file} {
 # Add/Import constrs file and set constrs file properties
 add_constr_file $origin_dir "picoevr_${carrier_hw_rev}.xdc" $constr_obj $constr_file
 set_property target_constrs_file "$origin_dir/../constraints/picoevr_${carrier_hw_rev}.xdc" $constr_obj
+
+set timing_xdc [file normalize "$origin_dir/../constraints/picoevr_${carrier_hw_rev}_timing.xdc"]
+
+if {[file exists $timing_xdc]} {
+  puts "Adding timing rules to the constraints set"
+  add_constr_file $origin_dir "picoevr_${carrier_hw_rev}_timing.xdc" $constr_obj $constr_file
+}
 
 if {[string equal $generate_ilas "yes"]} {
   puts "Debug cores enabled"
@@ -183,10 +342,6 @@ set obj [get_filesets utils_1]
 
 # Set 'utils_1' fileset properties
 set obj [get_filesets utils_1]
-
-# Add IP repository
-set_property ip_repo_paths "$origin_dir/../libs/hdl-ip-repo" [current_project]
-update_ip_catalog
 
 # Adding sources referenced in BDs, if not already added
 
@@ -577,7 +732,7 @@ proc add_ecats_to_bd { design_name } {
 #  - top_hdl      - existing top-level HDL wrapper file
 #                   (i.e, picoevr_system_arch_wrapper_revE.vhd )
 #  - new_top_name - new top-level HDL wrapper file that will be generated by
-#                   this process ( i.e., picoevr_system_arch_wrapper_revE_final.vhd )
+#                   this process ( i.e., picoevr_system_arch_wrapper_revE.vhd )
 #  - hdl_dir      - path to the directory containing the HDL sources
 #                   (HDL wrappers, and required HDL snippets)
 #  - bd_name      - name of the Vivado block design,( i.e. picoevr_system_arch )

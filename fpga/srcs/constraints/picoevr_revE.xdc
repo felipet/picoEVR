@@ -16,9 +16,9 @@
 # Clocks
 # =============================================================================
 # From Si5332A-D-GM1 Out 2
-set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC1]; # IO_L13P_T2_MRCC_13
+set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC1]
 # From Si5332A-D-GM1 Out 0
-set_property -dict {PACKAGE_PIN Y14 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC2]; # IO_L12P_T1_MRCC_13
+set_property -dict {PACKAGE_PIN Y14 IOSTANDARD LVCMOS33} [get_ports i_ZYNQ_MRCC2]
 
 # From Si5332A-D-GM1 Out 3 - COM Transceiver Reference Clock - Not Used
 #set_property PACKAGE_PIN V5 [get_ports i_ZYNQ_CLKREF1_N]
@@ -92,7 +92,7 @@ set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports {o_LEMO_DIR
 # =============================================================================
 #set_property -dict {PACKAGE_PIN V18 IOSTANDARD LVCMOS33} [get_ports o_SVC_I2C_REQ]
 #set_property -dict {PACKAGE_PIN W18 IOSTANDARD LVCMOS33} [get_ports i_SVC_I2C_GRANT]
-set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS33} [get_ports o_ZYNQ_I2C_RST]
+#set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS33} [get_ports o_ZYNQ_I2C_RST]
 
 # =============================================================================
 # FMC
