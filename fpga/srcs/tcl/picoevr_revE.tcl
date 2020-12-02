@@ -203,8 +203,8 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net [get_bd_pins voutput_slice_0to1/Dout] [get_bd_pins ESS_OpenEVR/i_FP_IN]
 
   # Create address segments
-  assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs ESS_OpenEVR/s_axi/reg0] -force
-  assign_bd_address -offset 0x43C10000 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs picoevr_channel_mapper_top/s_axi/reg0] -force
+  assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs /ESS_OpenEVR/s_axi/reg0]
+  assign_bd_address -offset 0x43C10000 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs /channel_mapper/s_axi/reg0]
 
   # Restore current instance
   current_bd_instance $oldCurInst
