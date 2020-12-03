@@ -1,8 +1,8 @@
 --Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
---Tool Version: Vivado v.2019.2.1 (lin64) Build 2729669 Thu Dec  5 04:48:12 MST 2019
---Date        : Fri Jul 31 13:50:56 2020
---Host        : ftglaptop running 64-bit Ubuntu 20.04 LTS
+--Tool Version: Vivado v.2019.2 (lin64) Build 2708876 Wed Nov  6 21:39:14 MST 2019
+--Date        : Wed Dec  2 17:15:29 2020
+--Host        : OptiPlex running 64-bit Ubuntu 20.04.1 LTS
 --Command     : generate_target picoevr_system_arch_wrapper.bd
 --Design      : picoevr_system_arch_wrapper
 --Purpose     : IP block netlist
@@ -34,20 +34,26 @@ entity picoevr_system_arch_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
+    b_LEMO_IO : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    i_EVR_RX_LOS : in STD_LOGIC;
     i_EVR_RX_N : in STD_LOGIC;
     i_EVR_RX_P : in STD_LOGIC;
     i_EVR_SFP_MOD_0 : in STD_LOGIC;
+    i_EVR_TX_FAULT : in STD_LOGIC;
+    i_MRF_UNIVMOD_IN0 : in STD_LOGIC;
+    i_MRF_UNIVMOD_IN1 : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
-    i_ZYNQ_CLKREF1_N : in STD_LOGIC;
-    i_ZYNQ_CLKREF1_P : in STD_LOGIC;
     i_ZYNQ_MRCC1 : in STD_LOGIC;
     i_ZYNQ_MRCC2 : in STD_LOGIC;
-    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
-    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    o_EVR_EVNT_LED : out STD_LOGIC;
+    o_EVR_LINK_LED : out STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC;
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
-    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 )
+    o_LEMO_DIR : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    o_MRF_UNIVMOD_OUT0 : out STD_LOGIC;
+    o_MRF_UNIVMOD_OUT1 : out STD_LOGIC
   );
 end picoevr_system_arch_wrapper;
 
@@ -59,17 +65,21 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     i_EVR_SFP_MOD_0 : in STD_LOGIC;
     i_ZYNQ_CLKREF0_N : in STD_LOGIC;
     i_ZYNQ_CLKREF0_P : in STD_LOGIC;
-    o_EVR_EVNT_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
-    o_EVR_LINK_LED : out STD_LOGIC_VECTOR ( 0 to 0 );
+    i_ZYNQ_MRCC1 : in STD_LOGIC;
+    i_ZYNQ_MRCC2 : in STD_LOGIC;
+    o_EVR_EVNT_LED : out STD_LOGIC;
+    o_EVR_LINK_LED : out STD_LOGIC;
     o_EVR_TX_N : out STD_LOGIC;
     o_EVR_TX_P : out STD_LOGIC;
-    o_EVR_TX_DISABLE : out STD_LOGIC_VECTOR ( 0 to 0 );
-    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
-    FIXED_IO_ddr_vrn : inout STD_LOGIC;
-    FIXED_IO_ddr_vrp : inout STD_LOGIC;
-    FIXED_IO_ps_srstb : inout STD_LOGIC;
-    FIXED_IO_ps_clk : inout STD_LOGIC;
-    FIXED_IO_ps_porb : inout STD_LOGIC;
+    o_EVR_TX_DISABLE : out STD_LOGIC;
+    o_LEMO_DIR : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    i_EVR_TX_FAULT : in STD_LOGIC;
+    i_EVR_RX_LOS : in STD_LOGIC;
+    o_MRF_UNIVMOD_OUT0 : out STD_LOGIC;
+    o_MRF_UNIVMOD_OUT1 : out STD_LOGIC;
+    i_MRF_UNIVMOD_IN0 : in STD_LOGIC;
+    i_MRF_UNIVMOD_IN1 : in STD_LOGIC;
+    b_LEMO_IO : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     DDR_cas_n : inout STD_LOGIC;
     DDR_cke : inout STD_LOGIC;
     DDR_ck_n : inout STD_LOGIC;
@@ -85,13 +95,15 @@ architecture STRUCTURE of picoevr_system_arch_wrapper is
     DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
     DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
     DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
-    i_ZYNQ_MRCC2 : in STD_LOGIC;
-    i_ZYNQ_MRCC1 : in STD_LOGIC
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+    FIXED_IO_ddr_vrn : inout STD_LOGIC;
+    FIXED_IO_ddr_vrp : inout STD_LOGIC;
+    FIXED_IO_ps_srstb : inout STD_LOGIC;
+    FIXED_IO_ps_clk : inout STD_LOGIC;
+    FIXED_IO_ps_porb : inout STD_LOGIC
   );
   end component picoevr_system_arch;
-
 begin
-
 picoevr_system_arch_i: component picoevr_system_arch
      port map (
       DDR_addr(14 downto 0) => DDR_addr(14 downto 0),
@@ -115,18 +127,25 @@ picoevr_system_arch_i: component picoevr_system_arch
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
+      b_LEMO_IO(3 downto 0) => b_LEMO_IO(3 downto 0),
+      i_EVR_RX_LOS => i_EVR_RX_LOS,
       i_EVR_RX_N => i_EVR_RX_N,
       i_EVR_RX_P => i_EVR_RX_P,
       i_EVR_SFP_MOD_0 => i_EVR_SFP_MOD_0,
+      i_EVR_TX_FAULT => i_EVR_TX_FAULT,
+      i_MRF_UNIVMOD_IN0 => i_MRF_UNIVMOD_IN0,
+      i_MRF_UNIVMOD_IN1 => i_MRF_UNIVMOD_IN1,
       i_ZYNQ_CLKREF0_N => i_ZYNQ_CLKREF0_N,
       i_ZYNQ_CLKREF0_P => i_ZYNQ_CLKREF0_P,
       i_ZYNQ_MRCC1 => i_ZYNQ_MRCC1,
       i_ZYNQ_MRCC2 => i_ZYNQ_MRCC2,
-      o_EVR_EVNT_LED(0) => o_EVR_EVNT_LED(0),
-      o_EVR_LINK_LED(0) => o_EVR_LINK_LED(0),
+      o_EVR_EVNT_LED => o_EVR_EVNT_LED,
+      o_EVR_LINK_LED => o_EVR_LINK_LED,
+      o_EVR_TX_DISABLE => o_EVR_TX_DISABLE,
       o_EVR_TX_N => o_EVR_TX_N,
       o_EVR_TX_P => o_EVR_TX_P,
-      o_EVR_TX_DISABLE(0) => o_EVR_TX_DISABLE(0)
+      o_LEMO_DIR(3 downto 0) => o_LEMO_DIR(3 downto 0),
+      o_MRF_UNIVMOD_OUT0 => o_MRF_UNIVMOD_OUT0,
+      o_MRF_UNIVMOD_OUT1 => o_MRF_UNIVMOD_OUT1
     );
-
 end STRUCTURE;
