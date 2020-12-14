@@ -190,7 +190,8 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net -net ESS_OpenEVR_i_MRF_UNIVMOD_IN1 [get_bd_ports i_MRF_UNIVMOD_IN1] [get_bd_pins ESS_OpenEVR/i_MRF_UNIVMOD_IN1]
 
   # Create port connections for the channel mapper
-  connect_bd_net [get_bd_ports i_ZYNQ_MRCC2] [get_bd_pins channel_mapper/i_sys_clk]
+  connect_bd_net [get_bd_ports i_ZYNQ_MRCC1] [get_bd_pins channel_mapper/i_ref0_clk]
+  connect_bd_net [get_bd_pins ESS_OpenEVR/o_EVR_EVENT_CLK] [get_bd_pins channel_mapper/i_ref1_clk]
   connect_bd_net [get_bd_pins channel_mapper/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
   connect_bd_net [get_bd_pins channel_mapper/s_axi_aresetn] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
   connect_bd_net [get_bd_ports b_LEMO_IO] [get_bd_pins channel_mapper/b_phy_ch]
