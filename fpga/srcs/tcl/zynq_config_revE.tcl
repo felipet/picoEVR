@@ -485,4 +485,6 @@ set_property -dict [ list \
   CONFIG.PCW_USB_RESET_SELECT {<Select>} \
   CONFIG.PCW_USE_M_AXI_GP0 {1} \
   CONFIG.PCW_USE_M_AXI_GP1 {0} \
+  CONFIG.PCW_USE_FABRIC_INTERRUPT {1} \
+  CONFIG.PCW_IRQ_F2P_INTR {1} \
 ] $processing_system7_0
