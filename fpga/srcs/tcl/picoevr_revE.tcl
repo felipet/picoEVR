@@ -153,11 +153,59 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   # Create instance: ps7_0_axi_periph, and set properties
   set ps7_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 ps7_0_axi_periph ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {2} \
+   CONFIG.NUM_MI {4} \
  ] $ps7_0_axi_periph
 
   # Create instance: rst_ps7_0_100M, and set properties
   set rst_ps7_0_100M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps7_0_100M ]
+
+   # Create instance: mapping_ram_X, and set properties
+   set mapping_RAM_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 mapping_ram_0 ]
+   set mapping_RAM_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 mapping_ram_1 ]
+
+   # Specify where are located the initialization file for the BRAM
+   set script_path [ file dirname [ file normalize [ info script ] ] ]
+   set coeFile0loc ${script_path}/../coe/event_decoder_map0.coe
+
+   set_property -dict [list \
+      CONFIG.Memory_Type {True_Dual_Port_RAM} \
+      CONFIG.Enable_32bit_Address {false} \
+      CONFIG.Use_Byte_Write_Enable {false} \
+      CONFIG.Byte_Size {9} CONFIG.Write_Depth_A {1024} \
+      CONFIG.Write_Width_B {128} CONFIG.Read_Width_B {128} \
+      CONFIG.Enable_B {Use_ENB_Pin} CONFIG.Register_PortA_Output_of_Memory_Primitives {true} \
+      CONFIG.Register_PortB_Output_of_Memory_Primitives {false} CONFIG.Load_Init_File {true} \
+      CONFIG.Fill_Remaining_Memory_Locations {true} \
+      CONFIG.Use_RSTA_Pin {false} CONFIG.Port_B_Clock {100} \
+      CONFIG.Coe_File $coeFile0loc \
+      CONFIG.Port_B_Write_Rate {50} \
+      CONFIG.Port_B_Enable_Rate {100} \
+      CONFIG.use_bram_block {Stand_Alone} \
+      CONFIG.EN_SAFETY_CKT {false} \
+   ] $mapping_RAM_0
+   set coeFile1loc ${script_path}/../coe/event_decoder_map1.coe
+   set_property -dict [list \
+      CONFIG.Memory_Type {True_Dual_Port_RAM} \
+      CONFIG.Enable_32bit_Address {false} \
+      CONFIG.Use_Byte_Write_Enable {false} \
+      CONFIG.Byte_Size {9} CONFIG.Write_Depth_A {1024} \
+      CONFIG.Write_Width_B {128} CONFIG.Read_Width_B {128} \
+      CONFIG.Enable_B {Use_ENB_Pin} CONFIG.Register_PortA_Output_of_Memory_Primitives {true} \
+      CONFIG.Register_PortB_Output_of_Memory_Primitives {false} CONFIG.Load_Init_File {true} \
+      CONFIG.Fill_Remaining_Memory_Locations {true} \
+      CONFIG.Use_RSTA_Pin {false} CONFIG.Port_B_Clock {100} \
+      CONFIG.Coe_File $coeFile1loc \
+      CONFIG.Port_B_Write_Rate {50} \
+      CONFIG.Port_B_Enable_Rate {100} \
+      CONFIG.use_bram_block {Stand_Alone} \
+      CONFIG.EN_SAFETY_CKT {false} \
+   ] $mapping_RAM_1
+
+   # Create instance: AXI Bram controller
+   set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
+   set axi_bram_ctrl_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_1 ]
+   set_property -dict [list CONFIG.PROTOCOL {AXI4LITE} CONFIG.SINGLE_PORT_BRAM {1} CONFIG.ECC_TYPE {0}] $axi_bram_ctrl_0
+   set_property -dict [list CONFIG.PROTOCOL {AXI4LITE} CONFIG.SINGLE_PORT_BRAM {1} CONFIG.ECC_TYPE {0}] $axi_bram_ctrl_1
 
   # Create interface connections
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
@@ -165,6 +213,10 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins ps7_0_axi_periph/S00_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M00_AXI [get_bd_intf_pins ESS_OpenEVR/s_axi] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI]
   connect_bd_intf_net [get_bd_intf_pins channel_mapper/s_axi] -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M01_AXI]
+  connect_bd_intf_net [get_bd_intf_pins mapping_ram_0/BRAM_PORTA] [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA]
+  connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M02_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
+  connect_bd_intf_net [get_bd_intf_pins mapping_ram_1/BRAM_PORTA] [get_bd_intf_pins axi_bram_ctrl_1/BRAM_PORTA]
+  connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M03_AXI] [get_bd_intf_pins axi_bram_ctrl_1/S_AXI]
 
   # Create port connections
   connect_bd_net -net ESS_OpenEVR_o_EVR_EVNT_LED [get_bd_ports o_EVR_EVNT_LED] [get_bd_pins ESS_OpenEVR/o_EVR_EVNT_LED]
@@ -178,9 +230,20 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net -net ESS_OpenEVR_i_MRCC2_CLK [get_bd_ports i_ZYNQ_MRCC2] [get_bd_pins ESS_OpenEVR/i_DEBUG_clk]
   connect_bd_net -net i_EVR_RX_N_0_1 [get_bd_ports i_EVR_RX_N] [get_bd_pins ESS_OpenEVR/i_EVR_RX_N]
   connect_bd_net -net i_EVR_RX_P_0_1 [get_bd_ports i_EVR_RX_P] [get_bd_pins ESS_OpenEVR/i_EVR_RX_P]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ESS_OpenEVR/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk]
+  connect_bd_net -net processing_system7_0_FCLK_CLK0 \
+      [get_bd_pins ESS_OpenEVR/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0] \
+      [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins ps7_0_axi_periph/ACLK] \
+      [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] \
+      [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins ps7_0_axi_periph/M03_ACLK] \
+      [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk] \
+      [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_1/s_axi_aclk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
-  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_pins ESS_OpenEVR/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
+  connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn \
+      [get_bd_pins ESS_OpenEVR/s_axi_aresetn] [get_bd_pins ps7_0_axi_periph/ARESETN] \
+      [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] \
+      [get_bd_pins ps7_0_axi_periph/M02_ARESETN] [get_bd_pins ps7_0_axi_periph/M03_ARESETN] \
+      [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] \
+      [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn] 
   connect_bd_net -net ESS_OpenEVR_i_EVR_TX_FAULT [get_bd_ports i_EVR_TX_FAULT] [get_bd_pins ESS_OpenEVR/i_EVR_TX_FAULT]
   connect_bd_net -net ESS_OpenEVR_i_EVR_RX_LOS [get_bd_ports i_EVR_RX_LOS] [get_bd_pins ESS_OpenEVR/i_EVR_RX_LOS]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_DISABLE [get_bd_ports o_EVR_TX_DISABLE] [get_bd_pins ESS_OpenEVR/o_EVR_TX_DISABLE]
