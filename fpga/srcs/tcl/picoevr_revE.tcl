@@ -217,6 +217,8 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M02_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
   connect_bd_intf_net [get_bd_intf_pins mapping_ram_1/BRAM_PORTA] [get_bd_intf_pins axi_bram_ctrl_1/BRAM_PORTA]
   connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M03_AXI] [get_bd_intf_pins axi_bram_ctrl_1/S_AXI]
+  connect_bd_intf_net [get_bd_intf_pins ESS_OpenEVR/o_EVNT_RAM_0] [get_bd_intf_pins mapping_ram_0/BRAM_PORTB]
+  connect_bd_intf_net [get_bd_intf_pins ESS_OpenEVR/o_EVNT_RAM_1] [get_bd_intf_pins mapping_ram_1/BRAM_PORTB]
 
   # Create port connections
   connect_bd_net -net ESS_OpenEVR_o_EVR_EVNT_LED [get_bd_ports o_EVR_EVNT_LED] [get_bd_pins ESS_OpenEVR/o_EVR_EVNT_LED]
@@ -243,7 +245,7 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
       [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] \
       [get_bd_pins ps7_0_axi_periph/M02_ARESETN] [get_bd_pins ps7_0_axi_periph/M03_ARESETN] \
       [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] \
-      [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn] 
+      [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn]
   connect_bd_net -net ESS_OpenEVR_i_EVR_TX_FAULT [get_bd_ports i_EVR_TX_FAULT] [get_bd_pins ESS_OpenEVR/i_EVR_TX_FAULT]
   connect_bd_net -net ESS_OpenEVR_i_EVR_RX_LOS [get_bd_ports i_EVR_RX_LOS] [get_bd_pins ESS_OpenEVR/i_EVR_RX_LOS]
   connect_bd_net -net ESS_OpenEVR_o_EVR_TX_DISABLE [get_bd_ports o_EVR_TX_DISABLE] [get_bd_pins ESS_OpenEVR/o_EVR_TX_DISABLE]
@@ -268,8 +270,10 @@ proc cr_bd_picoevr_system_arch { parentCell bd_name} {
   connect_bd_net [get_bd_pins voutput_slice_0to1/Dout] [get_bd_pins ESS_OpenEVR/i_FP_IN]
 
   # Create address segments
-  assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs /ESS_OpenEVR/s_axi/reg0]
-  assign_bd_address -offset 0x43C10000 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs /channel_mapper/s_axi/reg0]
+  assign_bd_address -offset 0x43C00000 -range 0x00000800 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs ESS_OpenEVR/s_axi/reg0]
+  assign_bd_address -offset 0x43C04000 -range 0x00001000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0]
+  assign_bd_address -offset 0x43C05000 -range 0x00001000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_bram_ctrl_1/S_AXI/Mem0]
+  assign_bd_address -offset 0x43C10000 -range 0x00000100 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs channel_mapper/s_axi/reg0]
 
   # Restore current instance
   current_bd_instance $oldCurInst
