@@ -575,7 +575,7 @@ proc add_ecats_to_bd { design_name } {
    CONFIG.NUM_OUT_CLKS {2} \
    CONFIG.PRIM_IN_FREQ {25} \
    CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
-   CONFIG.USE_LOCKED {true} \
+   CONFIG.USE_LOCKED {false} \
    CONFIG.USE_RESET {false} \
  ] $clk_wiz_0
 
@@ -623,56 +623,20 @@ proc add_ecats_to_bd { design_name } {
    CONFIG.CONST_WIDTH {8} \
  ] $ecat_slave_const_xDD
 
+  # Create instance: ecats_reset_0, and set properties
+  set ecats_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 ecats_reset_0 ]
+
   # Create instance: mini_ioc_ecat_slave_0, and set properties
   set mini_ioc_ecat_slave_0 [ create_bd_cell -type ip -vlnv user.org:user:mini_ioc_ecat_slave:1.0 mini_ioc_ecat_slave_0 ]
 
   # Create instance: strappiing_const, and set properties
   set strappiing_const [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 strappiing_const ]
 
-  # Create instance: util_vector_logic_0, and set properties
-  set util_vector_logic_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0 ]
-  set_property -dict [ list \
-   CONFIG.C_OPERATION {or} \
-   CONFIG.C_SIZE {1} \
-   CONFIG.LOGO_FILE {data/sym_orgate.png} \
- ] $util_vector_logic_0
-
-  # Create instance: util_vector_logic_1, and set properties
-  set util_vector_logic_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_1 ]
-  set_property -dict [ list \
-   CONFIG.C_OPERATION {and} \
-   CONFIG.C_SIZE {1} \
-   CONFIG.LOGO_FILE {data/sym_andgate.png} \
- ] $util_vector_logic_1
-
-  # Create instance: xlslice_0, and set properties
-  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
-
-  # Create instance: xlslice_1, and set properties
-  set xlslice_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_1 ]
-  set_property -dict [ list \
-   CONFIG.DIN_FROM {1} \
-   CONFIG.DIN_TO {1} \
-   CONFIG.DOUT_WIDTH {1} \
- ] $xlslice_1
-
-  # Create instance: axi_gpio_0, and set properties
-  set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
-  set_property -dict [ list \
-   CONFIG.C_ALL_OUTPUTS {1} \
- ] $axi_gpio_0
-
-  # Add additional slave interface to AXI interconnect
-  set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] [get_bd_cells ps7_0_axi_periph]
-
   # Create interface connections
   connect_bd_intf_net -intf_net CLK_IN1_D_0_1 [get_bd_intf_ports clk25] [get_bd_intf_pins clk_wiz_0/CLK_IN1_D]
-  connect_bd_intf_net -boundary_type upper [get_bd_intf_pins ps7_0_axi_periph/M01_AXI] [get_bd_intf_pins axi_gpio_0/S_AXI]
 
   # Create port connections
   connect_bd_net -net ESS_OpenEVR_o_TS_data [get_bd_pins ESS_OpenEVR/o_TS_data] [get_bd_pins mini_ioc_ecat_slave_0/PDI_GPI]
-  connect_bd_net [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
-  connect_bd_net [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
   connect_bd_net -net MII_RX_CLK0_0_1 [get_bd_ports mii_rx_clk0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_CLK0]
   connect_bd_net -net MII_RX_CLK1_0_1 [get_bd_ports mii_rx_clk1_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_CLK1]
   connect_bd_net -net MII_RX_DATA0_0_1 [get_bd_ports mii_rx_data0_i] [get_bd_pins mini_ioc_ecat_slave_0/MII_RX_DATA0]
@@ -686,7 +650,6 @@ proc add_ecats_to_bd { design_name } {
   connect_bd_net -net PROM_DATA_IN_0_1 [get_bd_ports prom_data_in] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_IN]
   connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins mini_ioc_ecat_slave_0/CLK25]
   connect_bd_net -net clk_wiz_0_clk_out2 [get_bd_pins clk_wiz_0/clk_out2] [get_bd_pins mini_ioc_ecat_slave_0/CLK100]
-  connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins util_vector_logic_1/Op2]
   connect_bd_net -net ecat_slave_const_00_dout [get_bd_pins ecat_slave_const_00/dout] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_SHIFT0] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_SHIFT1]
   connect_bd_net -net ecat_slave_const_1_dout [get_bd_pins ecat_slave_const_1/dout] [get_bd_pins mini_ioc_ecat_slave_0/PROM_SIZE]
   connect_bd_net -net ecat_slave_const_2_dout [get_bd_pins ecat_slave_const_xAA/dout] [get_bd_pins mini_ioc_ecat_slave_0/PDI_DIGI_DATA_IN0]
@@ -700,24 +663,19 @@ proc add_ecats_to_bd { design_name } {
   connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_DATA1 [get_bd_ports mii_tx_data1_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_DATA1]
   connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_ENA0 [get_bd_ports mii_tx_en0_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_ENA0]
   connect_bd_net -net mini_ioc_ecat_slave_0_MII_TX_ENA1 [get_bd_ports mii_tx_en1_o] [get_bd_pins mini_ioc_ecat_slave_0/MII_TX_ENA1]
-  connect_bd_net -net mini_ioc_ecat_slave_0_PDI_SOF [get_bd_pins mini_ioc_ecat_slave_0/PDI_SOF] [get_bd_pins util_vector_logic_0/Op2]
   connect_bd_net -net mini_ioc_ecat_slave_0_PROM_CLK [get_bd_ports prom_clk_o] [get_bd_pins mini_ioc_ecat_slave_0/PROM_CLK]
   connect_bd_net -net mini_ioc_ecat_slave_0_PROM_DATA_ENA [get_bd_ports prom_data_ena] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_ENA]
   connect_bd_net -net mini_ioc_ecat_slave_0_PROM_DATA_OUT [get_bd_ports prom_data_out] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_OUT]
   connect_bd_net -net nMII_LINK1_0_1 [get_bd_ports phy1_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK1]
   connect_bd_net -net phy0_an1_i [get_bd_ports phy0_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK0]
-  connect_bd_net -net util_vector_logic_0_Res1 [get_bd_pins ESS_OpenEVR/i_TS_req] [get_bd_pins mini_ioc_ecat_slave_0/LATCH_IN0] [get_bd_pins mini_ioc_ecat_slave_0/LATCH_IN1] [get_bd_pins util_vector_logic_0/Res]
-  connect_bd_net -net util_vector_logic_1_Res [get_bd_ports nreset_out] [get_bd_pins mini_ioc_ecat_slave_0/NRESET] [get_bd_pins util_vector_logic_1/Res]
-  connect_bd_net -net xlslice_0_Dout1 [get_bd_pins util_vector_logic_0/Op1] [get_bd_pins xlslice_0/Dout]
-  connect_bd_net -net xlslice_1_Dout [get_bd_pins util_vector_logic_1/Op1] [get_bd_pins xlslice_1/Dout]
   connect_bd_net -net strappiing_const_dout [get_bd_ports phy_pwdn1_o] [get_bd_ports phy_pwdn2_o] [get_bd_ports sw_strap1_o] [get_bd_ports sw_strap2_o] [get_bd_pins strappiing_const/dout]
-  connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_pins ps7_0_axi_periph/M01_ACLK]
-  connect_bd_net [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn]
-  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins xlslice_0/Din] [get_bd_pins xlslice_1/Din]
   connect_bd_net -net fmc_clk_en_dout [get_bd_ports fmc_clk_en_o] [get_bd_pins ecat_fmc_clk_en_const_0/dout]
+  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins ecats_reset_0/slowest_sync_clk]
+  connect_bd_net [get_bd_pins ecats_reset_0/ext_reset_in] [get_bd_pins processing_system7_0/FCLK_RESET0_N]
+  connect_bd_net [get_bd_pins ecats_reset_0/peripheral_aresetn] [get_bd_pins mini_ioc_ecat_slave_0/NRESET] [get_bd_ports nreset_out]
 
   # Assign memory-mapped address for AXI GPIO
-  assign_bd_address -offset 0x43C10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
+  assign_bd_address -offset 0x43C20000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
 
   validate_bd_design
   save_bd_design
