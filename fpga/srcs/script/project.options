@@ -11,6 +11,7 @@ project.tcl: fpga/srcs/tcl/picoevr_base.tcl
 project.tsoutputs: no
 
 firmware.carrier: revE
-firmware.en_dbg: yes
+firmware.en_dbg: no 
 firmware.en_dio: no
 firmware.en_ecats: no
+firmware.en_ecatm: no

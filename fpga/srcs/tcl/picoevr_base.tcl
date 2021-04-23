@@ -86,6 +86,7 @@ if { $::argc > 0 } {
       "--enable_debug" { incr i; set generate_ilas   [lindex $::argv $i] }
       "--enable_dio"   { incr i; set add_dio         [lindex $::argv $i] }
       "--enable_ecats" { incr i; set add_ecats       [lindex $::argv $i] }
+      "--enable_ecatm" { incr i; set add_ecatm       [lindex $::argv $i] }
       "--help"         { print_help }
       default {
         if { [regexp {^-} $option] } {
@@ -97,10 +98,20 @@ if { $::argc > 0 } {
   }
 }
 
-# Check if both add_dio and add_ecats are 'yes'. If so, error as only one FMC can
+set numFMC 0
+# Check if more than one FMC is enabled. If so, error as only one FMC can
 # be added to the design...
-if {[string equal $add_dio "yes"] && [string equal $add_ecats "yes"]} {
-    puts "ERROR: Both DIO and ECATS FMC have been enabled. Only one FMC can be supported"
+if {[string equal $add_dio "yes"]} {
+    set numFMC [expr $numFMC + 1]
+}
+if {[string equal $add_ecats "yes"]} {
+    set numFMC [expr $numFMC + 1]
+}
+if {[string equal $add_ecatm "yes"]} {
+    set numFMC [expr $numFMC + 1]
+}
+if {$numFMC > 1} {
+    puts "ERROR: More than one FMC target has been enabled. Only one FMC can be supported"
     exit 1
 }
 
@@ -548,8 +559,8 @@ proc add_ecats_to_bd { design_name } {
   set phy1_an1_i [ create_bd_port -dir I phy1_an1_i ]
   set phy1_an2_i [ create_bd_port -dir I phy1_an2_i ]
   set phy1_an_en_i [ create_bd_port -dir I phy1_an_en_i ]
-  set phy_pwdn1_o [ create_bd_port -dir O -from 0 -to 0 phy_pwdn1_o ]
-  set phy_pwdn2_o [ create_bd_port -dir O -from 0 -to 0 phy_pwdn2_o ]
+  set phy0_pwdn_o [ create_bd_port -dir O -from 0 -to 0 phy0_pwdn_o ]
+  set phy1_pwdn_o [ create_bd_port -dir O -from 0 -to 0 phy1_pwdn_o ]
   set prom_clk_o [ create_bd_port -dir O -type clk prom_clk_o ]
   set prom_data_ena [ create_bd_port -dir O prom_data_ena ]
   set prom_data_in [ create_bd_port -dir I prom_data_in ]
@@ -668,7 +679,7 @@ proc add_ecats_to_bd { design_name } {
   connect_bd_net -net mini_ioc_ecat_slave_0_PROM_DATA_OUT [get_bd_ports prom_data_out] [get_bd_pins mini_ioc_ecat_slave_0/PROM_DATA_OUT]
   connect_bd_net -net nMII_LINK1_0_1 [get_bd_ports phy1_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK1]
   connect_bd_net -net phy0_an1_i [get_bd_ports phy0_an1_i] [get_bd_pins mini_ioc_ecat_slave_0/nMII_LINK0]
-  connect_bd_net -net strappiing_const_dout [get_bd_ports phy_pwdn1_o] [get_bd_ports phy_pwdn2_o] [get_bd_ports sw_strap1_o] [get_bd_ports sw_strap2_o] [get_bd_pins strappiing_const/dout]
+  connect_bd_net -net strappiing_const_dout [get_bd_ports phy0_pwdn_o] [get_bd_ports phy1_pwdn_o] [get_bd_ports sw_strap1_o] [get_bd_ports sw_strap2_o] [get_bd_pins strappiing_const/dout]
   connect_bd_net -net fmc_clk_en_dout [get_bd_ports fmc_clk_en_o] [get_bd_pins ecat_fmc_clk_en_const_0/dout]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins ecats_reset_0/slowest_sync_clk]
   connect_bd_net [get_bd_pins ecats_reset_0/ext_reset_in] [get_bd_pins processing_system7_0/FCLK_RESET0_N]
@@ -681,6 +692,153 @@ proc add_ecats_to_bd { design_name } {
   save_bd_design
   # Close block design
   close_bd_design $design_name
+}
+
+# Process to add the required IP, ports and connections to the block
+# diagram to support the EtherCAT Master, using the EtherCAT Slave FMC.
+#
+# Takes the following required arguments:
+# - design_name - name of the block diagram, ( i.e. picoevr_system_arch )
+#
+proc add_ecatm_to_bd { design_name } {
+
+  # Open block design
+  open_bd_design [get_files $design_name.bd]
+
+  # Enable Ethernet 1 interface on the processing system
+  set_property -dict [list CONFIG.PCW_ENET1_PERIPHERAL_ENABLE {1} CONFIG.PCW_ENET1_GRP_MDIO_ENABLE {1}] [get_bd_cells processing_system7_0]
+
+  set clk25 [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 clk25 ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {25000000} \
+   ] $clk25
+
+  set mdio [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:mdio_rtl:1.0 mdio ]
+
+  # Create ports
+  set fmc_clk_en_o [ create_bd_port -dir O -from 0 -to 0 fmc_clk_en_o ]
+  set led_err_o [ create_bd_port -dir O led_err_o ]
+  set led_link_act_o [ create_bd_port -dir O -from 1 -to 0 led_link_act_o ]
+  set led_run_o [ create_bd_port -dir O led_run_o ]
+  set mii_rx_clk1_i [ create_bd_port -dir I mii_rx_clk1_i ]
+  set mii_rx_data1_i [ create_bd_port -dir I -from 3 -to 0 mii_rx_data1_i ]
+  set mii_rx_dv1_i [ create_bd_port -dir I mii_rx_dv1_i ]
+  set mii_rx_crs1_i [ create_bd_port -dir I mii_rx_crs1_i ]
+  set mii_rx_col1_i [ create_bd_port -dir I mii_rx_col1_i ]
+  set mii_rx_err1_i [ create_bd_port -dir I mii_rx_err1_i ]
+  set mii_tx_clk1_i [ create_bd_port -dir I mii_tx_clk1_i ]
+  set mii_tx_data1_o [ create_bd_port -dir O -from 3 -to 0 mii_tx_data1_o ]
+  set mii_tx_en1_o [ create_bd_port -dir O mii_tx_en1_o ]
+  set nreset_out [ create_bd_port -dir O -from 0 -to 0 nreset_out ]
+  set phy1_an1_i [ create_bd_port -dir I phy1_an1_i ]
+  set phy1_an2_i [ create_bd_port -dir I phy1_an2_i ]
+  set phy1_an_en_i [ create_bd_port -dir I phy1_an_en_i ]
+  set phy0_pwdn_o [ create_bd_port -dir O -from 0 -to 0 phy0_pwdn_o ]
+  set phy1_pwdn_o [ create_bd_port -dir O -from 0 -to 0 phy1_pwdn_o ]
+  set prom_clk_o [ create_bd_port -dir O -type clk prom_clk_o ]
+  set prom_data_ena [ create_bd_port -dir O prom_data_ena ]
+  set prom_data_in [ create_bd_port -dir I prom_data_in ]
+  set prom_data_out [ create_bd_port -dir O prom_data_out ]
+  set sw_strap1_o [ create_bd_port -dir O -from 0 -to 0 sw_strap1_o ]
+  set sw_strap2_o [ create_bd_port -dir O -from 0 -to 0 sw_strap2_o ]
+
+  # Create instance: clk_wiz_0, and set properties
+  set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
+  set_property -dict [ list \
+   CONFIG.CLKIN1_JITTER_PS {400.0} \
+   CONFIG.CLKOUT1_JITTER {356.129} \
+   CONFIG.CLKOUT1_PHASE_ERROR {237.727} \
+   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25} \
+   CONFIG.CLKOUT2_JITTER {226.965} \
+   CONFIG.CLKOUT2_PHASE_ERROR {237.727} \
+   CONFIG.CLKOUT2_USED {true} \
+   CONFIG.MMCM_CLKFBOUT_MULT_F {40.000} \
+   CONFIG.MMCM_CLKIN1_PERIOD {40.000} \
+   CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
+   CONFIG.MMCM_CLKOUT0_DIVIDE_F {40.000} \
+   CONFIG.MMCM_CLKOUT1_DIVIDE {10} \
+   CONFIG.NUM_OUT_CLKS {2} \
+   CONFIG.PRIM_IN_FREQ {25} \
+   CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
+   CONFIG.USE_LOCKED {false} \
+   CONFIG.USE_RESET {false} \
+  ] $clk_wiz_0
+
+  # Create instance: ecat_fmc_clk_en_const_0,  and set properties
+  set ecat_fmc_clk_en_const_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 ecat_fmc_clk_en_const_0 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {1} \
+  ] $ecat_fmc_clk_en_const_0
+
+
+  # Create instance: ecats_reset_0, and set properties
+  set ecats_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 ecats_reset_0 ]
+
+  # Create instance: strappiing_const, and set properties
+  set strappiing_const [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 strappiing_const ]
+
+  # Create instance: mii_rx_data_pad_const, and set properties
+  set mii_rx_data_pad_const [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 mii_rx_data_pad_const ]
+  set_property -dict [list \
+    CONFIG.CONST_WIDTH {4} \
+    CONFIG.CONST_VAL {0} \
+  ] $mii_rx_data_pad_const
+
+  set mii_rx_data_concat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 mii_rx_data_concat_0 ]
+
+  # Create instance: mii_tx_data_slice_0, and set properties
+  set mii_tx_data_slice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 mii_tx_data_slice_0 ]
+  set_property -dict [list \
+    CONFIG.DIN_FROM {3} \
+    CONFIG.DIN_WIDTH {8} \
+    CONFIG.DOUT_WIDTH {4} \
+  ] $mii_tx_data_slice_0
+
+  # Create instance: led_link0_const, and set properties
+  set led_link0_const [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 led_link0_const ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0} \
+ ] $led_link0_const
+
+  # Create instance: led_link_concat, and set properties
+  set led_link_concat [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 led_link_concat ]
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net CLK_IN1_D_0_1 [get_bd_intf_ports clk25] [get_bd_intf_pins clk_wiz_0/CLK_IN1_D]
+  connect_bd_intf_net -intf_net processing_system7_0_MDIO_ETHERNET_1 [get_bd_intf_ports mdio] [get_bd_intf_pins processing_system7_0/MDIO_ETHERNET_1]
+
+  # Connect Ethernet connections
+  connect_bd_net [get_bd_ports mii_rx_crs1_i] [get_bd_pins processing_system7_0/ENET1_GMII_CRS]
+  connect_bd_net [get_bd_ports mii_rx_clk1_i] [get_bd_pins processing_system7_0/ENET1_GMII_RX_CLK]
+  connect_bd_net [get_bd_ports mii_rx_dv1_i] [get_bd_pins processing_system7_0/ENET1_GMII_RX_DV]
+  connect_bd_net [get_bd_ports mii_rx_col1_i] [get_bd_pins processing_system7_0/ENET1_GMII_COL]
+  connect_bd_net [get_bd_ports mii_rx_err1_i] [get_bd_pins processing_system7_0/ENET1_GMII_RX_ER]
+  connect_bd_net [get_bd_pins processing_system7_0/ENET1_GMII_RXD] [get_bd_pins mii_rx_data_concat_0/dout]
+  connect_bd_net [get_bd_ports mii_rx_data1_i] [get_bd_pins mii_rx_data_concat_0/In0]
+  connect_bd_net [get_bd_pins mii_rx_data_pad_const/dout] [get_bd_pins mii_rx_data_concat_0/In1]
+  connect_bd_net [get_bd_ports mii_tx_clk1_i] [get_bd_pins processing_system7_0/ENET1_GMII_TX_CLK]
+  connect_bd_net [get_bd_pins mii_tx_data_slice_0/Din] [get_bd_pins processing_system7_0/ENET1_GMII_TXD]
+  connect_bd_net [get_bd_ports mii_tx_data1_o] [get_bd_pins mii_tx_data_slice_0/Dout]
+  connect_bd_net [get_bd_ports mii_tx_en1_o] [get_bd_pins processing_system7_0/ENET1_GMII_TX_EN]
+
+  # LEDs
+  connect_bd_net -net led_link_concat_dout [get_bd_ports led_link_act_o] [get_bd_pins led_link_concat/dout]
+  connect_bd_net -net phy1_an1_i_1 [get_bd_ports phy1_an1_i] [get_bd_pins led_link_concat/In1]
+  connect_bd_net -net phy1_an2_i_1 [get_bd_ports led_err_o] [get_bd_ports phy1_an2_i]
+  connect_bd_net -net phy1_an_en_i_1 [get_bd_ports led_run_o] [get_bd_ports phy1_an_en_i]
+  connect_bd_net -net led_link0_const_dout [get_bd_pins led_link0_const/dout] [get_bd_pins led_link_concat/In0]
+
+  connect_bd_net [get_bd_pins ecats_reset_0/ext_reset_in] [get_bd_pins processing_system7_0/FCLK_RESET0_N]
+  connect_bd_net -net fmc_clk_en_dout [get_bd_ports fmc_clk_en_o] [get_bd_pins ecat_fmc_clk_en_const_0/dout]
+  connect_bd_net -net strappiing_const_dout [get_bd_ports phy0_pwdn_o] [get_bd_ports phy1_pwdn_o] [get_bd_ports sw_strap1_o] [get_bd_ports sw_strap2_o] [get_bd_pins strappiing_const/dout]
+  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins ecats_reset_0/slowest_sync_clk]
+  connect_bd_net [get_bd_ports nreset_out] [get_bd_pins ecats_reset_0/peripheral_aresetn]
+
+  validate_bd_design
+  save_bd_design
+  # Close block design
+  close_bd_design $design_name
+
 }
 
 # Process to add the required top-level ports, component definition,
@@ -795,7 +953,15 @@ if {[string equal $add_dio "yes"]} {
     add_ecats_to_bd $bd_name
     # Modify top-level HDL wrapper file
     add_fmc_to_top $hdl_wrapper_file $new_top_file $hdl_dir $bd_name ecats
-    # Add DIO constraints file
+    # Add ECATS FMC constraints file
+    add_constr_file $origin_dir "picoevr_ecats.xdc" $constr_obj $constr_file
+} elseif {[string equal $add_ecatm "yes"]} {
+    puts "Adding ECATM FMC to $bd_name..."
+    add_ecatm_to_bd $bd_name
+    # Modify top-level HDL wrapper file
+    add_fmc_to_top $hdl_wrapper_file $new_top_file $hdl_dir $bd_name ecatm
+    # Add ECATS constraints file
+    # It is the same for slave or master
     add_constr_file $origin_dir "picoevr_ecats.xdc" $constr_obj $constr_file
 } else {
     # Copy source wrapper to "final" wrapper
