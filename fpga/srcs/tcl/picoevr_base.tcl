@@ -706,7 +706,7 @@ proc add_ecatm_to_bd { design_name } {
   open_bd_design [get_files $design_name.bd]
 
   # Enable Ethernet 1 interface on the processing system
-  set_property -dict [list CONFIG.PCW_ENET1_PERIPHERAL_ENABLE {1} CONFIG.PCW_ENET1_GRP_MDIO_ENABLE {1}] [get_bd_cells processing_system7_0]
+  set_property -dict [list CONFIG.PCW_ENET1_PERIPHERAL_ENABLE {1} CONFIG.PCW_ENET1_GRP_MDIO_ENABLE {1} CONFIG.PCW_ENET1_PERIPHERAL_FREQMHZ {100 Mbps}] [get_bd_cells processing_system7_0]
 
   set clk25 [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 clk25 ]
   set_property -dict [ list \
